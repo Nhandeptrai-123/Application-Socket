@@ -48,213 +48,6 @@ import com.example.applicationsocket.CameraPreview
 //import com.example.applicationsocket.CameraPreview
 import com.example.applicationsocket.R
 import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
-
-
-
-//@Composable
-//fun CircularImage(painter: Painter, contentDescription: String){
-//
-//    Column(
-//        modifier = Modifier.fillMaxSize(),
-//        horizontalAlignment = Alignment.CenterHorizontally,
-//        verticalArrangement = Arrangement.Center
-//    ) {
-//        Card(
-//            shape = CircleShape,
-//            border = BorderStroke(2.dp, Color.White)
-//        ) {
-//            Image(
-//                painter = painter,
-//                contentDescription = contentDescription,
-//            )
-//        }
-//    }
-//}
-
-@Composable
-fun CameraScreenTakePicture(){
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = Color.Black)
-    ) {
-        TopBar(
-            modifier = Modifier
-//                .weight(2f)
-//                .padding(bottom = 50.dp)
-        )
-
-        Row(
-            modifier = Modifier
-                .height(410.dp)
-//                .weight(5f)
-        ){
-            CameraLayout(
-                modifier = Modifier
-//                .weight(5f)
-//                    .fillMaxWidth()
-//                    .height(400.dp)
-
-            )
-        }
-
-
-        BottomBar(
-            modifier = Modifier
-//                .weight(2f)
-        )
-
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CameraScreenTakePicture1(){
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = Color.Black)
-    ) {
-        //TopBar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .height(40.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(
-                onClick = { /* Xử lý sự kiện nhấn nút 1 */ },
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.icon_1),
-                    contentDescription = "Icon 1",
-                )
-            }
-
-            Button(
-                onClick = { /* Xử lý sự kiện nhấn nút 2 */ }
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.icon_1),
-                    contentDescription = "Icon 1",
-                )
-                Text("Nút 2")
-            }
-
-            Button(
-                onClick = { /* Xử lý sự kiện nhấn nút 3 */ },
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.icon_3),
-                    contentDescription = "Icon 3",
-                )
-            }
-        }
-        
-//        Spacer(modifier = Modifier.width(10.dp))
-
-        //CameraLayout
-
-        val scaffoldState = rememberBottomSheetScaffoldState()
-        val context = LocalContext.current
-        val controller = remember {
-            LifecycleCameraController(context).apply {
-                setEnabledUseCases(
-                    CameraController.IMAGE_CAPTURE
-                )
-            }
-        }
-//    BottomSheetScaffold(
-//        scaffoldState = scaffoldState,
-//        sheetPeekHeight = 0.dp,
-//        sheetContent = {
-//
-//        }
-//    ){ padding ->
-//
-//
-//    }
-        Row(
-            modifier = Modifier
-//                .fillMaxWidth()
-//                .height(400.dp)
-            ,
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CameraPreview(
-                controller = controller,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(400.dp)
-            )
-//            IconButton(
-//                onClick = {
-//                    controller.cameraSelector =
-//                        if(controller.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA){
-//                            CameraSelector.DEFAULT_FRONT_CAMERA
-//                        } else{
-//                            CameraSelector.DEFAULT_BACK_CAMERA
-//                        }
-//                },
-//                modifier = Modifier
-//                    .offset(x = 16.dp, y = 16.dp)
-//            ) {
-//                Icon(
-//                    imageVector = Icons.Default.Cameraswitch ,
-//                    contentDescription = "Switch camera"
-//                )
-//            }
-        }
-
-//        Spacer(modifier = Modifier.width(10.dp))
-        //BottomBar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .height(40.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Button(
-                onClick = { /* Xử lý sự kiện nhấn nút 1 */ },
-            ) {
-                Image(
-                    imageVector = Icons.Default.FlashOn,
-                    contentDescription = "Turn on or off flash light",
-                )
-            }
-
-            Button(
-                onClick = { /* Xử lý sự kiện nhấn nút 2 */ }
-            ) {
-                Image(
-                    imageVector = Icons.Default.Camera,
-                    contentDescription = "Take picture",
-                )
-            }
-
-            Button(
-                onClick = {
-//                controller.cameraSelector =
-//                    if(controller.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA){
-//                        CameraSelector.DEFAULT_FRONT_CAMERA
-//                    } else{
-//                        CameraSelector.DEFAULT_BACK_CAMERA
-//                    }
-                },
-            ) {
-                Image(
-                    imageVector = Icons.Default.Cameraswitch,
-                    contentDescription = "Switch camera"
-                )
-            }
-        }
-    }
-}
-
 @Composable
 fun TopBar(modifier: Modifier = Modifier){
     Row(
@@ -293,67 +86,6 @@ fun TopBar(modifier: Modifier = Modifier){
     }
 }
 
-
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun CameraLayout(modifier: Modifier = Modifier){
-    val scaffoldState = rememberBottomSheetScaffoldState()
-    val context = LocalContext.current
-    val controller = remember {
-        LifecycleCameraController(context).apply {
-            setEnabledUseCases(
-                CameraController.IMAGE_CAPTURE
-            )
-        }
-    }
-
-//    BottomSheetScaffold(
-//        scaffoldState = scaffoldState,
-//        sheetPeekHeight = 0.dp,
-//        sheetContent = {
-//
-//        }
-//    ){ padding ->
-//
-//
-//    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(400.dp)
-        ,
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        CameraPreview(
-            controller = controller,
-            modifier = Modifier
-                .fillMaxSize()
-
-        )
-//            IconButton(
-//                onClick = {
-//                    controller.cameraSelector =
-//                        if(controller.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA){
-//                            CameraSelector.DEFAULT_FRONT_CAMERA
-//                        } else{
-//                            CameraSelector.DEFAULT_BACK_CAMERA
-//                        }
-//                },
-//                modifier = Modifier
-//                    .offset(x = 16.dp, y = 16.dp)
-//            ) {
-//                Icon(
-//                    imageVector = Icons.Default.Cameraswitch ,
-//                    contentDescription = "Switch camera"
-//                )
-//            }
-    }
-
-}
-
 @Composable
 fun BottomBar(modifier: Modifier = Modifier){
     Row(
@@ -382,12 +114,7 @@ fun BottomBar(modifier: Modifier = Modifier){
 
         Button(
             onClick = {
-//                controller.cameraSelector =
-//                    if(controller.cameraSelector == CameraSelector.DEFAULT_BACK_CAMERA){
-//                        CameraSelector.DEFAULT_FRONT_CAMERA
-//                    } else{
-//                        CameraSelector.DEFAULT_BACK_CAMERA
-//                    }
+
             },
         ) {
             Image(
@@ -398,10 +125,49 @@ fun BottomBar(modifier: Modifier = Modifier){
     }
 }
 
+@Composable
+fun testmain(){
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Phần trên cùng của màn hình
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.2f)
+                .background(Color.Red),
+            contentAlignment = Alignment.Center
+        ) {
+            TopBar()
+        }
+
+        // Phần giữa của màn hình
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .background(Color.Green),
+            contentAlignment = Alignment.Center
+        ) {
+            // có chỉnh sửa lại phần CameraPreview
+            CameraPreview()
+        }
+
+        // Phần dưới cùng của màn hình
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.2f)
+                .background(Color.Blue),
+            contentAlignment = Alignment.Center
+        ) {
+            BottomBar()
+        }
+    }
+}
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun TopBarPreview() {
     ApplicationSocketTheme {
-        CameraScreenTakePicture()
+        testmain()
     }
 }

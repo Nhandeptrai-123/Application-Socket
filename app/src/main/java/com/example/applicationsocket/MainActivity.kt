@@ -32,6 +32,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
 import com.example.applicationsocket.ui.cameraStuff.CameraScreenTakePicture1
+import com.example.applicationsocket.ui.cameraStuff.testmain
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -48,7 +49,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ApplicationSocketTheme {
-                CameraScreenTakePicture1()
+                testmain()
             }
         }
     }
