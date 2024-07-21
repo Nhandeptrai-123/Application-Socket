@@ -6,6 +6,7 @@ import androidx.camera.view.LifecycleCameraController
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -57,11 +59,14 @@ fun TopBar(modifier: Modifier = Modifier){
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Button(
+            modifier = Modifier
+                .size(60.dp),
             onClick = { /* Xử lý sự kiện nhấn nút 1 */ },
         ) {
             Image(
                 painter = painterResource(id = R.drawable.icon_1),
                 contentDescription = "Icon 1",
+                modifier = Modifier.size(100.dp),
             )
         }
 
@@ -92,7 +97,8 @@ fun BottomBar(modifier: Modifier = Modifier){
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Button(
             onClick = { /* Xử lý sự kiện nhấn nút 1 */ },
@@ -132,7 +138,7 @@ fun testmain(){
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(0.2f)
+                .weight(2f)
                 .background(Color.Red),
             contentAlignment = Alignment.Center
         ) {
@@ -143,7 +149,7 @@ fun testmain(){
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .weight(4f)
                 .background(Color.Green),
             contentAlignment = Alignment.Center
         ) {
@@ -155,9 +161,51 @@ fun testmain(){
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(0.2f)
+                .weight(3.25f)
                 .background(Color.Blue),
             contentAlignment = Alignment.Center
+        ) {
+            BottomBar()
+        }
+    }
+}
+
+@Composable
+fun testmain1(){
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Phần trên cùng của màn hình
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.15625f)
+                .background(Color.Red),
+//            contentAlignment = Alignment.Center
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TopBar()
+        }
+
+        // Phần giữa của màn hình
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.4375f)
+                .background(Color.Green)
+                .clip(RoundedCornerShape(55.dp)),
+//                .border(2.dp, Color.White, RoundedCornerShape(30.dp)),
+//            contentAlignment = Alignment.Center
+        ) {
+            // có chỉnh sửa lại phần CameraPreview
+            CameraPreview()
+        }
+
+        // Phần dưới cùng của màn hình
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.375f)
+                .background(Color.Blue),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             BottomBar()
         }

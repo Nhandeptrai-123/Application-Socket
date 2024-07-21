@@ -1,5 +1,6 @@
 package com.example.applicationsocket
 
+import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -30,9 +31,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
-import com.example.applicationsocket.ui.cameraStuff.CameraScreenTakePicture1
 import com.example.applicationsocket.ui.cameraStuff.testmain
+import com.example.applicationsocket.ui.cameraStuff.testmain1
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             ApplicationSocketTheme {
-                testmain()
+                testmain1()
             }
         }
     }
