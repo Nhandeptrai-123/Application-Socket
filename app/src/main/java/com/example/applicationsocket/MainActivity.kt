@@ -17,6 +17,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.applicationsocket.ViewModel.Home.Home
+import com.example.applicationsocket.ViewModel.ProfileUser.mainScreenProfile
 import com.example.applicationsocket.ViewModel.Screen.CreatedEmail
 import com.example.applicationsocket.ViewModel.Screen.CreatedName
 import com.example.applicationsocket.ViewModel.Screen.CreatedPass
@@ -130,7 +131,7 @@ fun MainNaviga(){
                                     checkIfUserExists(email, pass, context)
                                 }
                             }
-                        navController.navigate("HomeLogin")
+//                        navController.navigate("HomeLogin")
                     }
                 )
             }
@@ -189,7 +190,22 @@ fun MainNaviga(){
                 )
             }
             composable("Home"){
-                Home(userViewModel = userViewModel)
+                Home(userViewModel = userViewModel,
+                    toProfile = {
+                        navController.navigate("profile")
+                    }
+
+                    )
+            }
+            composable("profile"){
+                mainScreenProfile(userViewModel,
+                    comback = {
+                        navController.navigate("Home")
+                    },
+                    tologout = {
+                        navController.navigate("homeLogin")
+                    },
+                    )
             }
 
         }

@@ -3,12 +3,14 @@ package com.example.applicationsocket.ViewModel.Screen
 import android.content.Context
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -62,7 +64,7 @@ fun CreatedEmail( openloginOTP: (String,String) -> Unit, comback: () -> Unit){
     val isEmailValid = remember { mutableStateOf(true) }
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(color = Color(0xFF111111)),
 
     ) {
@@ -158,37 +160,40 @@ fun CreatedEmail( openloginOTP: (String,String) -> Unit, comback: () -> Unit){
                 onClick = {
                     val emailService = SeverMyEmail()
                     val handler = Handler(Looper.getMainLooper())
-                    val database = FirebaseDatabase.getInstance()
-                    val usersRef = database.getReference("users")
-
-                    usersRef.orderByChild("email").equalTo(email.value).addListenerForSingleValueEvent(object :
-                        ValueEventListener {
-                        override fun onDataChange(snapshot: DataSnapshot) {
-                            if (snapshot.exists()) {
-                                isEmailValid.value = false
-                                Toast.makeText(context, "Email đã tồn tại !", Toast.LENGTH_LONG).show()
+//                    val database = FirebaseDatabase.getInstance()
+//                    val usersRef = database.getReference("users")
+//
+//                    usersRef.orderByChild("email").equalTo(email.value).addListenerForSingleValueEvent(object :
+//                        ValueEventListener {
+//                        override fun onDataChange(snapshot: DataSnapshot) {
+//                            if (snapshot.exists()) {
+//                                isEmailValid.value = false
+//                                Toast.makeText(context, "Email đã tồn tại !", Toast.LENGTH_LONG).show()
+//                            } else {
+                    val otp = generateOTP()
+                    emailService.sendEmail(
+                        to = email.value,
+                        subject = "Mã OTP Socket Application",
+                        body = "Đây là mã OTP của bạn: $otp"
+                    ) { success, errorMessage ->
+                        handler.post {
+                            if (success) {
+                                Toast.makeText(context, "Gửi OTP Thành Công", Toast.LENGTH_LONG).show()
+                                openloginOTP(email.value, otp)
                             } else {
-                                val otp = generateOTP()
-                                emailService.sendEmail(
-                                    to = email.value,
-                                    subject = "Mã OTP Socket Application",
-                                    body = "Đây là mã OTP của bạn: $otp",
-                                ) { success ->
-                                    if (success) {
-                                        val emailtest = email
-                                        handler.post {
-                                            Toast.makeText(context, "Gửi OTP Thành Công", Toast.LENGTH_LONG).show()
-                                            openloginOTP(email.value, otp)
-                                        }
-                                    }
-                                }
+                                val errorText = errorMessage ?: "Đã xảy ra lỗi khi gửi OTP"
+                                Toast.makeText(context, "Gửi OTP Thất Bại: $errorText", Toast.LENGTH_LONG).show()
                             }
                         }
+                    }
 
-                        override fun onCancelled(error: DatabaseError) {
-                            Toast.makeText(context, "Lỗi !", Toast.LENGTH_LONG).show()
-                        }
-                    })
+//                            }
+//                        }
+//
+//                        override fun onCancelled(error: DatabaseError) {
+//                            Toast.makeText(context, "Lỗi !", Toast.LENGTH_LONG).show()
+//                        }
+//                    })
                 },
                 modifier = Modifier
                     .width(250.dp)

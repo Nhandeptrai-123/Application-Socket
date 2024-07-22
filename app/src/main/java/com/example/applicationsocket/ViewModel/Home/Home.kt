@@ -1,6 +1,8 @@
 package com.example.applicationsocket.ViewModel.Home
 
 import android.util.Log
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,13 +16,20 @@ import com.example.applicationsocket.data.modelNameUser
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Home(userViewModel: UserSessionViewModel) {
+fun Home(userViewModel: UserSessionViewModel, toProfile: () -> Unit) {
     val userInformation = userViewModel.userInformation.observeAsState().value
 
-    if (userInformation != null) {
-        Text(text = "Welcome, ${userInformation.firstName} ${userInformation.lastName}")
-    } else {
-        Text(text = "No user information available")
-        Log.d("Home", "No user information available")
+
+    Column {
+        if (userInformation != null) {
+            Text(text = "Welcome, ${userInformation.firstName} ${userInformation.lastName}")
+        } else {
+            Text(text = "No user information available")
+            Log.d("Home", "No user information available")
+        }
+        Button(onClick = { toProfile() }) {
+            Text(text = "Đêsn Profile")
+        }
     }
+
 }

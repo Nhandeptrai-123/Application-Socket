@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -70,7 +71,7 @@ fun createOTP( email: String, otp: String, comback: () -> Unit, checkMail: (Stri
     val context = LocalContext.current
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(color = Color(0xFF111111)),
 
         ) {
@@ -152,19 +153,19 @@ fun createOTP( email: String, otp: String, comback: () -> Unit, checkMail: (Stri
                         addStyle(SpanStyle(color = Color(0xFFb4b4b4)), 0, 8)
                     },
                     onClick = {
-                        val otp = generateOTP() // Implement function to generate OTP
-                        emailService.sendEmail(
-                            to = email,
-                            subject = "Mã OTP Socket Application",
-                            body = "Đây là mã OTP của bạn: $otp",
-                        ) { success ->
-                            if (success) {
-                                handler.post {
-                                    Toast.makeText(context, "Gửi OTP Thành Công", Toast.LENGTH_LONG)
-                                        .show()
-                                }
-                            }
-                        }
+//                        val otp = generateOTP() // Implement function to generate OTP
+//                        emailService.sendEmail(
+//                            to = email,
+//                            subject = "Mã OTP Socket Application",
+//                            body = "Đây là mã OTP của bạn: $otp",
+//                        ) { success ->
+//                            if (success) {
+//                                handler.post {
+//                                    Toast.makeText(context, "Gửi OTP Thành Công", Toast.LENGTH_LONG)
+//                                        .show()
+//                                }
+//                            }
+//                        }
                         // Reset lại thời gian và trạng thái
                         time.value = 10
                         canRetry.value = false
