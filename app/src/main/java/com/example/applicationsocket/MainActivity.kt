@@ -6,6 +6,8 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -17,6 +19,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.applicationsocket.ViewModel.Home.Home
+import com.example.applicationsocket.ViewModel.ProfileUser.mainChangePass
+import com.example.applicationsocket.ViewModel.ProfileUser.mainScreenChanceName
+import com.example.applicationsocket.ViewModel.ProfileUser.mainScreenFeedback
 import com.example.applicationsocket.ViewModel.ProfileUser.mainScreenProfile
 import com.example.applicationsocket.ViewModel.Screen.CreatedEmail
 import com.example.applicationsocket.ViewModel.Screen.CreatedName
@@ -26,7 +31,12 @@ import com.example.applicationsocket.ViewModel.Screen.ScreenLogin
 import com.example.applicationsocket.ViewModel.Screen.checkIfUserExists
 import com.example.applicationsocket.ViewModel.Screen.completeCreate
 import com.example.applicationsocket.ViewModel.Screen.createOTP
+import com.example.applicationsocket.ViewModel.Screen.generateOTP
 import com.example.applicationsocket.ViewModel.Screen.saveBasicUserData
+import com.example.applicationsocket.data.UserIDModel
+import com.example.applicationsocket.data.UserSessionViewModel
+import com.example.applicationsocket.data.getUserEmail
+import com.example.applicationsocket.data.getUserName
 import com.example.applicationsocket.data.modelNameUser
 //import com.example.applicationsocket.ViewModel.Screen.ScreenLoginEmail
 //import com.example.applicationsocket.ViewModel.Screen.ScreenLoginModel
@@ -39,6 +49,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.sun.mail.iap.Argument
 import kotlin.math.log
 
 class MainActivity : ComponentActivity() {
@@ -56,7 +67,9 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainNaviga(){
     val userViewModel: UserSessionViewModel = viewModel()
+    val userIDModel: UserIDModel = viewModel()
     val navController = rememberNavController()
+    val context = LocalContext.current
     ApplicationSocketTheme {
         NavHost(navController = navController, startDestination = "homeLogin") {
             // Navigate to Login screen
@@ -124,14 +137,12 @@ fun MainNaviga(){
                                     user?.let {
                                         val userId = it.uid
                                         saveBasicUserData(userId, email, pass)
-//                                        Toast.makeText(context, "Thành công", Toast.LENGTH_LONG).show()
                                         navController.navigate("CreateName/$userId")
                                     }
                                 } else {
                                     checkIfUserExists(email, pass, context)
                                 }
                             }
-//                        navController.navigate("HomeLogin")
                     }
                 )
             }
@@ -156,7 +167,6 @@ fun MainNaviga(){
 
                         userRef.setValue(information)
                             .addOnSuccessListener {
-//                                Toast.makeText(context, "Đăng Ký thành Công, Hãy đăng nhập !", Toast.LENGTH_LONG).show()
                                 navController.navigate("completeCreateUser")
                             }
                             .addOnFailureListener { exception ->
@@ -180,99 +190,115 @@ fun MainNaviga(){
                     comback = {
                         navController.navigate("homeLogin")
                     },
-                    getPassEmail = { email: String, pass: String, context: android.content.Context ->
-                        login(email, pass, context, userViewModel , toHome = {userId ->
-                            getUserName(userID = userId, context = context,userViewModel ,togoHome = {
-                                navController.navigate("Home")
-                            })
-                        })
+                    getPassEmail = {email, pass, context ->
+                        login(email, pass, context, userViewModel, userIDModel ) { userId ->
+                            navController.navigate("Home/$userId")
+                        }
+                    },
+                )
+            }
+            composable(
+                "Home/{userId}",
+                arguments = listOf(navArgument("userId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val userId = backStackEntry.arguments?.getString("userId")
+                requireNotNull(userId) // Ensure userId is not null
+                Home(userID = userId,
+                    userViewModel = userViewModel,
+                    idmodelUser = userIDModel,
+                    toProfile = {
+                        navController.navigate("profile/$userId")
                     }
                 )
             }
-            composable("Home"){
-                Home(userViewModel = userViewModel,
-                    toProfile = {
-                        navController.navigate("profile")
-                    }
 
-                    )
-            }
-            composable("profile"){
-                mainScreenProfile(userViewModel,
+            composable("profile/{userId}",
+                arguments = listOf(navArgument("userId") { type = NavType.StringType })
+            ){backStackEntry ->
+                val userid = backStackEntry.arguments?.getString("userId")
+                requireNotNull(userid)// Provide a default value if null
+                mainScreenProfile(userid,userViewModel,userIDModel,
                     comback = {
-                        navController.navigate("Home")
+                        navController.navigate("Home/$userid")
                     },
                     tologout = {
-                        navController.navigate("homeLogin")
+                        navController.navigate("homeLogin") {
+                            // tác dụng không cho quay lại màn hình trước sau khi đăng xuất
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        }
+                    },
+                    toChangeName = {
+                        navController.navigate("ChangeName/$userid")
+                    },
+                    toChangePass = {
+                        navController.navigate("ChangePass/$userid")
+                    },
+                    toSendFeedBack = {
+                        navController.navigate("sendFeedBack/$userid")
                     },
                     )
+            }
+            composable("ChangeName/{userid}",
+                arguments = listOf(
+                    navArgument("userid") { type = NavType.StringType } ,
+                )
+                ){
+                val userid = it.arguments?.getString("userid")
+                requireNotNull(userid)// Provide a default value if null
+                mainScreenChanceName(userModel = userViewModel, userid,
+                    comback = {
+                        navController.navigate("profile/$userid")
+                    }
+                )
+
+            }
+            composable("ChangePass/{userid}",
+                arguments = listOf(navArgument("userid") { type = NavType.StringType },)
+                ){
+                val userid = it.arguments?.getString("userid")
+                requireNotNull(userid)// Provide a default value if null
+                mainChangePass(userid,userIDModel,
+                    comback = {
+                        navController.navigate("profile/$userid")
+                    })
+
+            }
+            composable("sendFeedBack/{userid}",
+                arguments = listOf(navArgument("userid") { type = NavType.StringType })
+                ){
+                val userid = it.arguments?.getString("userid")
+                requireNotNull(userid)// Provide a default value if null
+                mainScreenFeedback( userid, userIDModel,
+                    comback = {
+                        navController.navigate("profile/$userid")
+                    })
+
+
             }
 
         }
     }
 }
-fun login(email: String, pass: String, context: Context, userViewModel: UserSessionViewModel, toHome: (String) -> Unit) {
+fun login(email: String, pass: String, context: Context, userViewModel: UserSessionViewModel,userIDModel: UserIDModel, toHome: (String) -> Unit) {
     val auth = FirebaseAuth.getInstance()
     auth.signInWithEmailAndPassword(email, pass).addOnCompleteListener { task ->
         if (task.isSuccessful) {
             Toast.makeText(context, "Đăng nhập thành công", Toast.LENGTH_LONG).show()
             val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
+
+            // nêm truyền ữ liệu sau khi đăng nhập để dễ goji và sữ đụng
             getUserName(userId, context, userViewModel, togoHome = {
-                toHome(userId) // This callback is now responsible for navigation after user data retrieval
+                toHome(userId)
             })
         } else {
             val errorMessage = task.exception?.let {
                 when (it) {
-                    is FirebaseAuthInvalidCredentialsException -> "Thông tin đăng nhập không chính xác"
+                    is FirebaseAuthInvalidCredentialsException -> "Mật khẩu không không chính xác"
                     is FirebaseAuthInvalidUserException -> "Tài khoản không tồn tại hoặc đã bị vô hiệu hóa"
                     else -> "Đăng nhập thất bại: ${it.message}"
                 }
             } ?: "Lỗi không xác định"
             Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
         }
-    }
-}
-
-fun getUserName(userID: String, context: Context, userViewModel: UserSessionViewModel, togoHome: () -> Unit) {
-    val database = FirebaseDatabase.getInstance()
-    val userRef = database.getReference("users").child(userID).child("information")
-
-    userRef.get().addOnCompleteListener { task ->
-        if (task.isSuccessful) {
-            val userInformation = task.result?.getValue(modelNameUser::class.java)
-            if (userInformation != null) {
-                userViewModel.setUserInformation(userInformation)
-                togoHome()
-            } else {
-                Toast.makeText(context, "Không có thông tin người dùng", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            val errorMessage = task.exception?.message ?: "Lỗi không xác định"
-            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
-        }
-    }
-}
-
-// đây làm duy trì đăng nhập giống session(PHP) chư abieest đặt tên English nh nào để đây
-class UserSessionViewModel : ViewModel() {
-    private val _userInformation = MutableLiveData<modelNameUser?>()
-    val userInformation: LiveData<modelNameUser?> = _userInformation
-
-    fun setUserInformation(userInformation: modelNameUser) {
-        _userInformation.value = userInformation
-    }
-
-    fun logOut() {
-        FirebaseAuth.getInstance().signOut()
-        _userInformation.value = null
-    }
-}
-
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun PreviewScreenEmail() {
-    ApplicationSocketTheme {
-        MainNaviga()
     }
 }

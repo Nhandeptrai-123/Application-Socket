@@ -3,6 +3,7 @@ package com.example.applicationsocket.ViewModel.ProfileUser
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,10 +27,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -39,6 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -48,25 +50,27 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.example.applicationsocket.R
-import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.example.applicationsocket.UserSessionViewModel
+import com.example.applicationsocket.ViewModel.Screen.generateOTP
+import com.example.applicationsocket.data.UserIDModel
+import com.example.applicationsocket.data.UserSessionViewModel
+import com.example.applicationsocket.data.modelNameUser
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import java.util.UUID
 
 //hàm ảnh profile user theo dạng tròn
 @Composable
 fun CircularImage(imageURI: String?, contentImage: String){
-    val painter = if(imageURI != null){
+    val painter = if (!imageURI.isNullOrEmpty()) {
         rememberAsyncImagePainter(model = imageURI)
-    }else{
+    } else {
         painterResource(id = R.drawable.user)
     }
 
@@ -77,23 +81,62 @@ fun CircularImage(imageURI: String?, contentImage: String){
             .size(100.dp)
             .clip(CircleShape)
             .border(2.dp, Color.Yellow, CircleShape)
+
     )
 }
-fun uploadImageToFirebaseStorage(imageUri: Uri, context: Context, onUploadSuccess: (String) -> Unit) {
-    val storageReference = FirebaseStorage.getInstance().reference
-    val imageRef = storageReference.child("imagesProflie/${UUID.randomUUID()}.jpg")
-
-    imageRef.putFile(imageUri)
-        .addOnSuccessListener {
-            imageRef.downloadUrl.addOnSuccessListener { uri ->
-                onUploadSuccess(uri.toString())
-            }
-        }
-        .addOnFailureListener { exception ->
-            Toast.makeText(context, "Upload failed: ${exception.message}", Toast.LENGTH_SHORT).show()
-        }
+//hàm này xoá ảnh sau khi kiem tra imageprofileuser có ảnh cũ không
+fun deleteImageFromFirebaseStorage(imageUrl: String, onSuccess: () -> Unit, onFailure: () -> Unit) {
+    val storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrl)
+    storageReference.delete()
+        .addOnSuccessListener { onSuccess() }
+        .addOnFailureListener { onFailure() }
 }
 
+fun uploadImageToFirebaseStorage(userID: String, imageUri: Uri, context: Context, onUploadSuccess: (String) -> Unit) {
+    val database = FirebaseDatabase.getInstance()
+    val userRef = database.getReference("users").child(userID).child("information")
+
+    // Kiểm tra và xóa ảnh cũ nếu có
+    getImageProfileUser(userID) { existingImageUrl ->
+        existingImageUrl?.let { url ->
+            deleteImageFromFirebaseStorage(url.toString(), {
+                // Tiếp tục tải lên ảnh mới sau khi đã xoá ảnh cũ
+                val storageReference = FirebaseStorage.getInstance().reference
+                val imageRef = storageReference.child("imagesProfile/${UUID.randomUUID()}.jpg")
+
+                imageRef.putFile(imageUri)
+                    .addOnSuccessListener {
+                        imageRef.downloadUrl.addOnSuccessListener { uri ->
+                            // Cập nhật URL ảnh mới vào Realtime Database
+                            userRef.child("imageProfileUser").setValue(uri.toString())
+                            onUploadSuccess(uri.toString())
+                        }
+                    }
+                    .addOnFailureListener { exception ->
+                        Toast.makeText(context, "Upload failed: ${exception.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }, {
+                Toast.makeText(context, "Failed to delete old image", Toast.LENGTH_SHORT).show()
+            })
+        } ?: run {
+            // Không có ảnh cũ, tiếp tục tải lên ảnh mới
+            val storageReference = FirebaseStorage.getInstance().reference
+            val imageRef = storageReference.child("imagesProfile/${UUID.randomUUID()}.jpg")
+
+            imageRef.putFile(imageUri)
+                .addOnSuccessListener {
+                    imageRef.downloadUrl.addOnSuccessListener { uri ->
+                        // Cập nhật URL ảnh mới vào Realtime Database
+                        userRef.child("imageProfileUser").setValue(uri.toString())
+                        onUploadSuccess(uri.toString())
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    Toast.makeText(context, "Upload failed: ${exception.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+}
 //hàm này chọn ảnh của máy user
 @Composable
 fun ImagePicker(onImageSelected: (Uri) -> Unit) {
@@ -114,18 +157,48 @@ fun ImagePicker(onImageSelected: (Uri) -> Unit) {
     }
 }
 
+fun getImageProfileUser(userID: String, onSuccess: (modelNameUser?) -> Unit) {
+    val database = FirebaseDatabase.getInstance()
+    val imageUser = database.getReference("users").child(userID).child("information")
+
+    imageUser.get()
+        .addOnSuccessListener  { task ->
+            val imageProfileUser = task.child("imageProfileUser").getValue(String::class.java)
+            val firstName = task.child("firstName").getValue(String::class.java)
+            val lastName = task.child("lastName").getValue(String::class.java)
+
+            val userInformation = modelNameUser(
+                imageProfileUser = imageProfileUser,
+                firstName = firstName,
+                lastName = lastName
+            )
+            onSuccess(userInformation)
+        }.addOnFailureListener { task ->
+            Log.e("FirebaseDatabase", "Error getting data ImageUser", task)
+            onSuccess(null)
+        }
+}
 
 @Composable
-fun imageVSnameProfile(user: UserSessionViewModel, comback: () -> Unit){
-    var imageURI by remember { mutableStateOf<String?>(null) }
+fun imageVSnameProfile( UserID:String, user: UserSessionViewModel, comback: () -> Unit){
+    var userInfor by remember { mutableStateOf<modelNameUser?>(null) }
     var context = LocalContext.current
     val userInformation = user.userInformation.observeAsState().value
 
+    // lấy dữ liệu imageUser từ firebase
+    LaunchedEffect(UserID) {
+        getImageProfileUser(UserID) { infor ->
+            userInfor = infor
+        }
+
+    }
     FloatingActionButton(
         onClick = {
             comback()
         },
-        modifier = Modifier.width(35.dp).padding(start = 10.dp, top = 5.dp ),
+        modifier = Modifier
+            .width(35.dp)
+            .padding(start = 10.dp, top = 5.dp),
         containerColor = Color.Black,
         contentColor = Color.White
     ) {
@@ -141,26 +214,32 @@ fun imageVSnameProfile(user: UserSessionViewModel, comback: () -> Unit){
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ){
-        Column {
-            CircularImage(imageURI, "Profile Image")
+        Column(
+            modifier = Modifier
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            CircularImage("${userInfor?.imageProfileUser}", "Profile Image")
             Spacer(modifier = Modifier.height(7.dp))
-            Text(text = "${userInformation?.firstName} ${userInformation?.lastName}",
+            Text(text = "${userInfor?.firstName} ${userInfor?.lastName}",
                 color = Color.White,
                 fontSize = 20.sp,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+//                modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Spacer(modifier = Modifier.height(1.dp))
             ImagePicker(onImageSelected = { uri ->
-                uploadImageToFirebaseStorage(uri, context) { uploadedImageUrl ->
-                    imageURI = uploadedImageUrl
+                uploadImageToFirebaseStorage(UserID,uri, context) { uploadedImageUrl ->
+                    userInfor?.imageProfileUser = uploadedImageUrl
                 }
             })
         }
     }
 
 }
+
 @Composable
-fun categoryChanceProfile(){
+fun categoryChanceProfile(toChangeName: () -> Unit, toChangePass: () -> Unit, toSendFeedBack: () -> Unit){
     Column(modifier = Modifier
         .fillMaxWidth()
         .padding(start = 15.dp, end = 15.dp, top = 20.dp)
@@ -184,39 +263,46 @@ fun categoryChanceProfile(){
 
                 ) {
                 Row( modifier = Modifier.padding(top = 7.dp, bottom = 7.dp)){
-                    Icon(imageVector = Icons.Default.Lock, contentDescription = "Tổng Quan", tint = Color.White)
-                    Text("Thay đổi mật khẩu",
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Thay đổi tên", tint = Color.White)
+                    Text("Thay đổi tên",
                         color = Color.White, fontSize = 16.sp,fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 7.dp).clickable {
-                            //nơi xét sự kiện cho click
-                        },
+                        modifier = Modifier
+                            .padding(start = 7.dp)
+                            .clickable {
+                                toChangeName()
+                            },
                         style = MaterialTheme.typography.bodyMedium)
                 }
 
                 Divider(color = Color.Gray, thickness = 1.dp)
                 Row( modifier = Modifier.padding(top = 7.dp, bottom = 7.dp)){
-                    Icon(imageVector = Icons.Default.Send, contentDescription = "Tổng Quan", tint = Color.White)
-                    Text("Chia sẻ phản hồi",
+                    Icon(imageVector = Icons.Default.Lock, contentDescription = "Thay đổi mật khẩu", tint = Color.White)
+                    Text("Thay đổi mật khẩu",
                         color = Color.White, fontSize = 16.sp,fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 7.dp).clickable {
-                            //nơi xét sự kiện cho click
-                        },
+                        modifier = Modifier
+                            .padding(start = 7.dp)
+                            .clickable {
+                                toChangePass()
+                            },
                         style = MaterialTheme.typography.bodyMedium)
                 }
                 Divider(color = Color.Gray, thickness = 1.dp)
                 Row( modifier = Modifier.padding(top = 7.dp, bottom = 7.dp)){
-                    Icon(imageVector = Icons.Default.Info, contentDescription = "Tổng Quan", tint = Color.White)
+                    Icon(imageVector = Icons.Default.Info, contentDescription = "Báo cáo sự cố", tint = Color.White)
                     Text("Báo cáo sự cố",
                         color = Color.White, fontSize = 16.sp,fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 7.dp).clickable {
-                            //nơi xét sự kiện cho click
-                        },
+                        modifier = Modifier
+                            .padding(start = 7.dp)
+                            .clickable {
+                                toSendFeedBack()
+                            },
                         style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
     }
 }
+
 @Composable
 fun signOutProfile(usermodel: UserSessionViewModel, tologout: () -> Unit){
     Column(modifier = Modifier
@@ -245,11 +331,13 @@ fun signOutProfile(usermodel: UserSessionViewModel, tologout: () -> Unit){
                     Icon(imageVector = Icons.Default.ExitToApp, contentDescription = "Tổng Quan", tint = Color.White)
                     Text("Đăng xuất",
                         color = Color.White, fontSize = 16.sp,fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 7.dp).clickable {
-                            //nơi xét sự kiện cho click
-                            usermodel.logOut()
-                            tologout()
-                        },
+                        modifier = Modifier
+                            .padding(start = 7.dp)
+                            .clickable {
+                                //nơi xét sự kiện cho click
+                                usermodel.logOut()
+                                tologout()
+                            },
                         style = MaterialTheme.typography.bodyMedium)
                 }
                 Divider(color = Color.Gray, thickness = 1.dp)
@@ -257,10 +345,12 @@ fun signOutProfile(usermodel: UserSessionViewModel, tologout: () -> Unit){
                     Icon(imageVector = Icons.Default.Info, contentDescription = "Tổng Quan", tint = Color(0xFFFF4500))
                     Text("Xoá tài khoản",
                         color = Color(0xFFFF4500), fontSize = 16.sp,fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 7.dp).clickable {
-                            //nơi xét sự kiện cho click
+                        modifier = Modifier
+                            .padding(start = 7.dp)
+                            .clickable {
+                                //nơi xét sự kiện cho click
 //                            usermodel.logOut()
-                        },
+                            },
                         style = MaterialTheme.typography.bodyMedium)
                 }
             }
@@ -269,26 +359,26 @@ fun signOutProfile(usermodel: UserSessionViewModel, tologout: () -> Unit){
 }
 
 @Composable
-fun mainScreenProfile(usermodel: UserSessionViewModel,comback: () -> Unit, tologout: () -> Unit){
+fun mainScreenProfile(UserID:String,usermodel: UserSessionViewModel,userIDModel: UserIDModel,
+                      comback: () -> Unit,
+                      tologout: () -> Unit,
+                      toChangeName: () -> Unit,
+                      toChangePass: () -> Unit,
+                      toSendFeedBack: () -> Unit,
+                    ){
     LazyColumn(modifier = Modifier
         .fillMaxWidth()
         .fillMaxSize()
         .background(Color(0xFF111111))) {
         item {
-            imageVSnameProfile(usermodel, comback)
+            imageVSnameProfile(UserID,usermodel, comback)
         }
         item {
-            categoryChanceProfile()
+            categoryChanceProfile(toChangeName, toChangePass, toSendFeedBack)
         }
         item {
             signOutProfile(usermodel, tologout)
         }
     }
 }
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun mainScreenProfilePreview() {
-    ApplicationSocketTheme {
-        mainScreenProfile(UserSessionViewModel(),{}, {})
-    }
-}
+

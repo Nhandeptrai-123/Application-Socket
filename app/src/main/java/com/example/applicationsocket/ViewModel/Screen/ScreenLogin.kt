@@ -11,11 +11,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.applicationsocket.R
-import com.example.applicationsocket.UserSessionViewModel
 import com.example.applicationsocket.data.modelUser
 import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
 import com.google.firebase.auth.FirebaseAuth
@@ -55,7 +57,7 @@ import com.google.firebase.database.FirebaseDatabase
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen( comback: () -> Unit, getPassEmail: (String, String, Context) -> Unit, ) {
+fun LoginScreen( comback: () -> Unit, getPassEmail: (String, String, Context) -> Unit) {
     var email = remember { mutableStateOf("") }
     var pass = remember { mutableStateOf("") }
     var isTextFieldEmpty by remember { mutableStateOf(true) }
@@ -65,6 +67,8 @@ fun LoginScreen( comback: () -> Unit, getPassEmail: (String, String, Context) ->
             .fillMaxSize()
             .background(color = Color(0xFF111111))
             .padding(10.dp)
+            .verticalScroll(rememberScrollState())
+            .imePadding(),
     ) {
         // Content 1
         Row(

@@ -13,10 +13,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -62,11 +65,13 @@ fun CreatedEmail( openloginOTP: (String,String) -> Unit, comback: () -> Unit){
     var isTextFieldEmpty by remember { mutableStateOf(true) }
     val context = LocalContext.current
     val isEmailValid = remember { mutableStateOf(true) }
+    val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color(0xFF111111)),
-
+            .background(color = Color(0xFF111111))
+            .verticalScroll(scrollState)
+            .imePadding(),
     ) {
         //conten 1
         Row(modifier = Modifier.padding(start = 17.dp, top = 15.dp)) {
@@ -160,44 +165,45 @@ fun CreatedEmail( openloginOTP: (String,String) -> Unit, comback: () -> Unit){
                 onClick = {
                     val emailService = SeverMyEmail()
                     val handler = Handler(Looper.getMainLooper())
-//                    val database = FirebaseDatabase.getInstance()
-//                    val usersRef = database.getReference("users")
-//
-//                    usersRef.orderByChild("email").equalTo(email.value).addListenerForSingleValueEvent(object :
-//                        ValueEventListener {
-//                        override fun onDataChange(snapshot: DataSnapshot) {
-//                            if (snapshot.exists()) {
-//                                isEmailValid.value = false
-//                                Toast.makeText(context, "Email đã tồn tại !", Toast.LENGTH_LONG).show()
-//                            } else {
-                    val otp = generateOTP()
-                    emailService.sendEmail(
-                        to = email.value,
-                        subject = "Mã OTP Socket Application",
-                        body = "Đây là mã OTP của bạn: $otp"
-                    ) { success, errorMessage ->
-                        handler.post {
-                            if (success) {
-                                Toast.makeText(context, "Gửi OTP Thành Công", Toast.LENGTH_LONG).show()
-                                openloginOTP(email.value, otp)
-                            } else {
-                                val errorText = errorMessage ?: "Đã xảy ra lỗi khi gửi OTP"
-                                Toast.makeText(context, "Gửi OTP Thất Bại: $errorText", Toast.LENGTH_LONG).show()
+                    val database = FirebaseDatabase.getInstance()
+                    val usersRef = database.getReference("users")
+
+                    usersRef.orderByChild("email").equalTo(email.value)
+                        .addListenerForSingleValueEvent(object :
+                            ValueEventListener {
+                            override fun onDataChange(snapshot: DataSnapshot) {
+                                if (snapshot.exists()) {
+                                    isEmailValid.value = false
+                                    Toast.makeText(context, "Email đã tồn tại !", Toast.LENGTH_LONG)
+                                        .show()
+                                } else {
+                                    val otp = generateOTP()
+                                    emailService.sendEmail(
+                                        to = email.value,
+                                        subject = "Mã OTP Socket Application",
+                                        body = "Đây là mã OTP của bạn: $otp"
+                                    ) { success, errorMessage ->
+                                        handler.post {
+                                            if (success) {
+                                                Toast.makeText(context, "Gửi OTP Thành Công", Toast.LENGTH_LONG).show()
+                                                openloginOTP(email.value, otp)
+                                            } else {
+                                                val errorText = errorMessage ?: "Đã xảy ra lỗi khi gửi OTP"
+                                                Toast.makeText(context, "Gửi OTP Thất Bại: $errorText", Toast.LENGTH_LONG).show()
+                                            }
+                                        }
+                                }
                             }
                         }
-                    }
 
-//                            }
-//                        }
-//
-//                        override fun onCancelled(error: DatabaseError) {
-//                            Toast.makeText(context, "Lỗi !", Toast.LENGTH_LONG).show()
-//                        }
-//                    })
+                        override fun onCancelled(error: DatabaseError) {
+                            Toast.makeText(context, "Lỗi !", Toast.LENGTH_LONG).show()
+                        }
+                    })
                 },
                 modifier = Modifier
-                    .width(250.dp)
-                    .height(100.dp),
+                    .fillMaxWidth()
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isTextFieldEmpty) Color.Gray else Color.Yellow,
                     contentColor = if (isTextFieldEmpty) Color.White else Color.Black
