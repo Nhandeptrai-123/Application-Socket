@@ -9,6 +9,10 @@
     <uses-permission android:name="android.permission.CAMERA" />
 <!--    <uses-permission android:name="android.permission.RECORD_AUDIO" />-->
 <!--Dòng trên giúp cấp quyền camera và video-->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<!--    2 dòng tren giup cung cap quyen doc va ghi bo nho-->
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"

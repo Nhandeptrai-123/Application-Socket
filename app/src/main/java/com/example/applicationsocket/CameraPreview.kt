@@ -1,7 +1,9 @@
 package com.example.applicationsocket
 
+import android.net.Uri
 import android.util.Log
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.LifecycleCameraController
@@ -16,7 +18,12 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 
 @Composable
-fun CameraPreview() {
+fun CameraPreview(
+    currentCamera: CameraSelector,
+    onImageCaptured: (Uri) -> Unit,
+    imageCapture: ImageCapture,
+    modifier: Modifier
+) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val previewView = remember { PreviewView(context) }
@@ -29,12 +36,12 @@ fun CameraPreview() {
                 it.setSurfaceProvider(previewView.surfaceProvider)
             }
 
-            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+//            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
 
             try {
                 cameraProvider.unbindAll()
                 cameraProvider.bindToLifecycle(
-                    lifecycleOwner, cameraSelector, preview
+                    lifecycleOwner, currentCamera, preview, imageCapture
                 )
             } catch (exc: Exception) {
                 Log.e("CameraPreview", "Use case binding failed", exc)
