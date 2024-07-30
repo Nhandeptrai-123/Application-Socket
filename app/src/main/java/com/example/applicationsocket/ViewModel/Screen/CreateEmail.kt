@@ -178,6 +178,7 @@ fun CreatedEmail( openloginOTP: (String,String) -> Unit, comback: () -> Unit){
                                         .show()
                                 } else {
                                     val otp = generateOTP()
+                                    Log.d("OTP", otp)
                                     emailService.sendEmail(
                                         to = email.value,
                                         subject = "Mã OTP Socket Application",

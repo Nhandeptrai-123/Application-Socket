@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.applicationsocket.ViewModel.Home.Home
+import com.example.applicationsocket.ViewModel.Home.mainListFriend
 import com.example.applicationsocket.ViewModel.ProfileUser.mainChangePass
 import com.example.applicationsocket.ViewModel.ProfileUser.mainScreenChanceName
 import com.example.applicationsocket.ViewModel.ProfileUser.mainScreenFeedback
@@ -208,6 +209,9 @@ fun MainNaviga(){
                     idmodelUser = userIDModel,
                     toProfile = {
                         navController.navigate("profile/$userId")
+                    },
+                    toFriendList = {
+                        navController.navigate("friendList/$userId")
                     }
                 )
             }
@@ -272,7 +276,16 @@ fun MainNaviga(){
                     comback = {
                         navController.navigate("profile/$userid")
                     })
-
+            }
+            composable("friendList/{userId}",
+                arguments = listOf(navArgument("userId") { type = NavType.StringType })
+                ){
+                val userId = it.arguments?.getString("userId")
+                requireNotNull(userId)// Provide a default value if null
+                mainListFriend(userIDModel,userId,
+                    comback = {
+                        navController.navigate("Home/$userId")
+                    },)
 
             }
 

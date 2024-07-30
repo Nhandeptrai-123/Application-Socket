@@ -19,20 +19,18 @@ import com.example.applicationsocket.data.modelUser
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Home(userID: String, userViewModel: UserSessionViewModel,idmodelUser: UserIDModel, toProfile: () -> Unit) {
+fun Home(userID: String, userViewModel: UserSessionViewModel,idmodelUser: UserIDModel, toProfile: () -> Unit, toFriendList: () -> Unit){
     val userInformation = userViewModel.userInformation.observeAsState().value
 
     getUserEmail(userID, idmodelUser)
     val userid = idmodelUser.userID.observeAsState().value
     Column {
-        if (userInformation != null ) {
-            Text(text = "Welcome, ${userInformation.firstName} ${userInformation.lastName} and ${userID} và email: ${userid?.email}")
-        } else {
-            Text(text = "No user information available")
-            Log.d("Home", "No user information available")
-        }
+        Text(text = "Welcome, ${userInformation?.firstName} ${userInformation?.lastName} and ${userID} và email: ${userid?.email}")
         Button(onClick = { toProfile() }) {
             Text(text = "Đêsn Profile")
+        }
+        Button(onClick = {toFriendList()}){
+            Text(text = "Danh sách bạn bè")
         }
     }
 

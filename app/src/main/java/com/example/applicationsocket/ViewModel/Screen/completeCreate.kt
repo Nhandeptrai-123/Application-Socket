@@ -64,7 +64,7 @@ fun completeCreate(comback: () -> Unit) {
     val context = LocalContext.current
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(color = Color(0xFF111111)),
 
         ) {
@@ -73,7 +73,7 @@ fun completeCreate(comback: () -> Unit) {
                 modifier = Modifier
                     .width(400.dp)
                     .padding(start = 20.dp, end = 20.dp)
-                    .height(770.dp), // Ensure the Column takes up the maximum height available
+                    .fillMaxSize(),// Ensure the Column takes up the maximum height available
                 verticalArrangement = Arrangement.Center, // Centers the content vertically
                 horizontalAlignment = Alignment.CenterHorizontally
             )

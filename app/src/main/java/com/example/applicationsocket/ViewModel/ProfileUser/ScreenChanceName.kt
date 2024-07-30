@@ -193,7 +193,6 @@ fun mainScreenChanceName(userModel: UserSessionViewModel,userID : String, combac
     ) {
         headScreen(conback = comback)
         bodyScreen(userModel = userModel,userid = userID)
-//        bottomScreen(ho = ho, ten = ten, isTextFieldEmpty = isTextFieldEmpty)
     }
 
 }
