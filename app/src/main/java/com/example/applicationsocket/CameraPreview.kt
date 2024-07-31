@@ -22,7 +22,7 @@ fun CameraPreview(
     currentCamera: CameraSelector,
     onImageCaptured: (Uri) -> Unit,
     imageCapture: ImageCapture,
-    modifier: Modifier
+//    modifier: Modifier
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current

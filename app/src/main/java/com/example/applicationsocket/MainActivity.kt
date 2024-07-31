@@ -8,8 +8,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
-//import com.example.applicationsocket.ui.cameraStuff.TestMain1
-import com.example.applicationsocket.ui.cameraStuff.testmain1
+import com.example.applicationsocket.ui.cameraStuff.TestMain1
+//import com.example.applicationsocket.ui.cameraStuff.testmain1
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            testmain1()
+            TestMain1()
         }
 
         requestPermissions()
