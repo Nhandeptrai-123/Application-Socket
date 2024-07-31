@@ -13,11 +13,13 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -62,6 +64,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import com.example.applicationsocket.CameraPreview
 //import com.example.applicationsocket.CameraPreview
@@ -75,8 +78,8 @@ import java.io.File
 fun TopBar(modifier: Modifier = Modifier){
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+            .fillMaxSize(),
+//            .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         FloatingActionButton(
@@ -147,8 +150,8 @@ fun BottomBar(
     val backgroundColorLocket = Color(0xFF111111)
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
+            .fillMaxWidth(),
+//            .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -204,6 +207,149 @@ fun BottomBar(
                     .size(55.dp)
                     .background(backgroundColorLocket)
             )
+        }
+    }
+}
+
+
+
+@Composable
+fun HistoryPart(){
+    //su dung cho toan app
+    val backgroundColorLocket = Color(0xFF111111)
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clickable {  }
+            .background(backgroundColorLocket)
+//            .fillMaxWidth()
+    ) {
+        Text(
+            text = "Lịch sử",
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp
+        )
+        Image(
+            painter = painterResource(id = R.drawable.down_arrow),
+            contentDescription = null,
+            modifier = Modifier
+                .size(40.dp)
+        )
+    }
+}
+
+@Composable
+fun TestMain1() {
+    val context = LocalContext.current
+    val (currentCamera, setCurrentCamera) = remember { mutableStateOf(CameraSelector.DEFAULT_BACK_CAMERA) }
+    val (flashEnabled, setFlashEnabled) = remember { mutableStateOf(false) }
+    val (showWhiteScreen, setShowWhiteScreen) = remember { mutableStateOf(false) }
+    val imageCapture = remember {
+        ImageCapture.Builder().build()
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+
+
+
+    fun capturePhoto() {
+        if (flashEnabled && currentCamera == CameraSelector.DEFAULT_BACK_CAMERA) {
+            imageCapture.flashMode = ImageCapture.FLASH_MODE_ON
+        } else {
+            imageCapture.flashMode = ImageCapture.FLASH_MODE_OFF
+        }
+
+        val photoFile = File(
+            context.getExternalFilesDir(null),
+            "${System.currentTimeMillis()}.jpg"
+        )
+
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+        imageCapture.takePicture(
+            outputOptions,
+            ContextCompat.getMainExecutor(context),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exception: ImageCaptureException) {
+                    Log.e("CameraPreview", "Photo capture failed: ${exception.message}", exception)
+                }
+
+                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                    val savedUri = Uri.fromFile(photoFile)
+                    Log.d("CameraPreview", "Photo capture succeeded: $savedUri")
+                    Toast.makeText(context, "Photo capture succeeded: $savedUri", Toast.LENGTH_SHORT).show()
+                    // Handle the saved image URI here
+                }
+            }
+        )
+    }
+
+    fun takePicture() {
+        capturePhoto()
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        //su dung cho toan app
+        val backgroundColorLocket = Color(0xFF111111)
+        // Phần trên cùng của màn hình
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.15625f)
+                .background(backgroundColorLocket),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TopBar()
+        }
+
+        // Phần giữa của màn hình
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.4375f)
+                .background(backgroundColorLocket)
+                .clip(RoundedCornerShape(55.dp))
+        ) {
+            CameraPreview(currentCamera, onImageCaptured = { uri ->
+                // Handle captured image URI here
+            }, imageCapture)
+        }
+        // Phần dưới cùng của màn hình
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(0.21875f)
+                .background(backgroundColorLocket)
+                .padding(top = 20.dp),
+//            verticalAlignment = Alignment.CenterVertically
+        ) {
+            BottomBar(
+                onTakePicture = { takePicture() },
+                onSwitchCamera = {
+                    setCurrentCamera(
+                        if (currentCamera == CameraSelector.DEFAULT_BACK_CAMERA)
+                            CameraSelector.DEFAULT_FRONT_CAMERA
+                        else
+                            CameraSelector.DEFAULT_BACK_CAMERA
+                    )
+                },
+                flashEnabled = flashEnabled,
+                onFlashToggle = { setFlashEnabled(!flashEnabled) }
+            )
+        }
+
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(backgroundColorLocket)
+                .weight(0.1875f)
+
+        ){
+            HistoryPart()
         }
     }
 }
@@ -342,110 +488,6 @@ fun BottomBar(
 //    }
 //}
 
-@Composable
-fun TestMain1() {
-    val context = LocalContext.current
-    val (currentCamera, setCurrentCamera) = remember { mutableStateOf(CameraSelector.DEFAULT_BACK_CAMERA) }
-    val (flashEnabled, setFlashEnabled) = remember { mutableStateOf(false) }
-    val (showWhiteScreen, setShowWhiteScreen) = remember { mutableStateOf(false) }
-    val imageCapture = remember {
-        ImageCapture.Builder().build()
-    }
-
-    val coroutineScope = rememberCoroutineScope()
-
-
-
-    fun capturePhoto() {
-        if (flashEnabled && currentCamera == CameraSelector.DEFAULT_BACK_CAMERA) {
-            imageCapture.flashMode = ImageCapture.FLASH_MODE_ON
-        } else {
-            imageCapture.flashMode = ImageCapture.FLASH_MODE_OFF
-        }
-
-        val photoFile = File(
-            context.getExternalFilesDir(null),
-            "${System.currentTimeMillis()}.jpg"
-        )
-
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(context),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onError(exception: ImageCaptureException) {
-                    Log.e("CameraPreview", "Photo capture failed: ${exception.message}", exception)
-                }
-
-                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    val savedUri = Uri.fromFile(photoFile)
-                    Log.d("CameraPreview", "Photo capture succeeded: $savedUri")
-                    Toast.makeText(context, "Photo capture succeeded: $savedUri", Toast.LENGTH_SHORT).show()
-                    // Handle the saved image URI here
-                }
-            }
-        )
-    }
-
-    fun takePicture() {
-        capturePhoto()
-    }
-
-    Column(modifier = Modifier.fillMaxSize()) {
-        //su dung cho toan app
-        val backgroundColorLocket = Color(0xFF111111)
-        // Phần trên cùng của màn hình
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.15625f)
-                .background(backgroundColorLocket),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            TopBar()
-        }
-
-        // Phần giữa của màn hình
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.4375f)
-                .background(backgroundColorLocket)
-                .clip(RoundedCornerShape(55.dp))
-        ) {
-            CameraPreview(currentCamera, onImageCaptured = { uri ->
-                // Handle captured image URI here
-            }, imageCapture)
-        }
-
-        // Phần dưới cùng của màn hình
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.375f)
-                .background(backgroundColorLocket),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BottomBar(
-                onTakePicture = { takePicture() },
-                onSwitchCamera = {
-                    setCurrentCamera(
-                        if (currentCamera == CameraSelector.DEFAULT_BACK_CAMERA)
-                            CameraSelector.DEFAULT_FRONT_CAMERA
-                        else
-                            CameraSelector.DEFAULT_BACK_CAMERA
-                    )
-                },
-                flashEnabled = flashEnabled,
-                onFlashToggle = { setFlashEnabled(!flashEnabled) }
-            )
-        }
-    }
-}
-
-
-
 //@Composable
 //fun testmain(){
 //    Column(modifier = Modifier.fillMaxSize()) {
@@ -491,7 +533,7 @@ fun TestMain1() {
 @Composable
 fun TopBarPreview() {
     ApplicationSocketTheme {
-        TopBar()
+        HistoryPart()
 
     }
 }
