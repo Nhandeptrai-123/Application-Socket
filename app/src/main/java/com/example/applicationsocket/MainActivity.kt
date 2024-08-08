@@ -2,14 +2,20 @@ package com.example.applicationsocket
 
 import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
 import android.Manifest
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
-import com.example.applicationsocket.ui.cameraStuff.TestMain1
-//import com.example.applicationsocket.ui.cameraStuff.testmain1
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.applicationsocket.ui.cameraStuff.CameraScreenTakePicture
+import com.example.applicationsocket.ui.cameraStuff.CameraScreenEditPicture
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -19,10 +25,12 @@ class MainActivity : ComponentActivity() {
     private lateinit var outputDirectory: File
     private lateinit var cameraExecutor: ExecutorService
 
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            TestMain1()
+            MainScreen()
         }
 
         requestPermissions()
@@ -60,6 +68,27 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         private const val REQUEST_CODE_PERMISSIONS = 10
+    }
+}
+
+@Composable
+fun MainScreen() {
+    val navController = rememberNavController()
+
+    NavHost(navController, startDestination = "take_picture_screen") {
+        composable("take_picture_screen") {
+            CameraScreenTakePicture(
+//                onTakePicture = {},
+                navController
+            )
+        }
+        composable(
+            "edit_picture_screen/{photoUri}",
+            arguments = listOf(navArgument("photoUri") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val photoUri = Uri.parse(backStackEntry.arguments?.getString("photoUri"))
+            CameraScreenEditPicture(photoUri)
+        }
     }
 }
 

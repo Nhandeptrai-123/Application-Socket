@@ -9,21 +9,23 @@ import androidx.camera.core.ImageCaptureException
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -40,180 +42,190 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.navigation.NavController
+import coil.compose.rememberAsyncImagePainter
 import com.example.applicationsocket.CameraPreview
 import com.example.applicationsocket.R
 import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
 import java.io.File
 
 @Composable
-fun TopBar(modifier: Modifier = Modifier){
+fun SendTo(modifier: Modifier = Modifier) {
     Row(
         modifier = Modifier
             .fillMaxSize(),
-//            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        FloatingActionButton(
-            onClick = { /*TODO*/ },
-            shape = CircleShape,
-            modifier = Modifier
-                .size(45.dp),
-            containerColor = Color.DarkGray,
-        ) {
-           Image(
-               painter = painterResource(id = R.drawable.profile_user),
-               contentDescription = "User Profile",
-               modifier = Modifier
-                   .size(30.dp)
-                   .border(width = 2.dp, color = Color.White, shape = CircleShape)
-                   .background(Color.White, shape = CircleShape)
-           )
-        }
-
-        Button(
-            onClick = { /*TODO*/ },
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.DarkGray,
-                contentColor = Color.White
-            ),
-            modifier = Modifier
-                .width(200.dp)
-//                .clip(RoundedCornerShape(55.dp))
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.friends),
-                contentDescription = "All friends",
-                modifier = Modifier.size(27.dp)
-            )
-                Spacer(modifier = Modifier.width(8.dp)) // Thêm khoảng cách giữa hình ảnh và văn bản
-            Text(
-                text = "1 Bạn bè",
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        FloatingActionButton(
-            onClick = { /*TODO*/ },
-            shape = CircleShape,
-            modifier = Modifier
-                .size(45.dp),
-            containerColor = Color.DarkGray,
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.speech_bubble),
-                contentDescription = "Messaging",
-                modifier = Modifier
-                    .size(30.dp)
-                    .background(Color.DarkGray, shape = CircleShape)
-            )
-        }
+        Text(
+            text = "Gửi đến...",
+            fontWeight = FontWeight.Bold,
+            fontSize = 20.sp,
+            color = Color.White
+        )
     }
 }
 
 @Composable
-fun BottomBar(
-    onTakePicture: () -> Unit,
-    onSwitchCamera: () -> Unit,
-    flashEnabled: Boolean,
-    onFlashToggle: () -> Unit,
+fun EditButtonInBottomBar(
     modifier: Modifier = Modifier
 ){
     val backgroundColorLocket = Color(0xFF111111)
     Row(
         modifier = Modifier
             .fillMaxWidth(),
-//            .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Button(
-            onClick = { onFlashToggle() },
+            onClick = {  },
             colors = ButtonDefaults.buttonColors(
                 containerColor = backgroundColorLocket,
             )
         ) {
-            // Sử dụng painterResource để tải hình ảnh
-            val flashDisablePainter = painterResource(id = R.drawable.flash)
-            val flashEnablePainter = painterResource(id = R.drawable.thunder)
-
             Image(
-                painter = if (flashEnabled) flashEnablePainter else flashDisablePainter,
+                painter = painterResource(id = R.drawable.close),
                 contentDescription = "Turn on or turn off flash",
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(20.dp)
             )
         }
 
 
         val borderColorTakePictureIcon = Color(0xFFefaf0c)
         FloatingActionButton(
-            onClick = onTakePicture,
-            containerColor = Color.Black,
+            onClick = { },
+            containerColor = Color(0xFF505050),
             shape = CircleShape,
             modifier = Modifier
                 .size(95.dp) // Kích thước của nút
-                .border(5.dp, borderColorTakePictureIcon, CircleShape) // Đường viền màu vàng
         ) {
             Image(
-                painter = painterResource(id = R.drawable.button_take_picture_icon),
+                painter = painterResource(id = R.drawable.send),
                 contentDescription = "Turn on or turn off flash",
-//                imageVector = flashEnableImageVector,
                 modifier = Modifier
-                    .size(75.dp)
-                    .border(width = 2.dp, color = Color.White, shape = CircleShape)
-                    .background(Color.White, shape = CircleShape)
+                    .size(40.dp)
+                    .background(Color(0xFF505050), shape = CircleShape)
             )
         }
 
         Button(
-            onClick = onSwitchCamera,
+            onClick = { },
             colors = ButtonDefaults.buttonColors(
                 containerColor = backgroundColorLocket,
             )
         ) {
             Image(
-                painter = painterResource(id = R.drawable.camera_swap_icon),
+                painter = painterResource(id = R.drawable.download),
                 contentDescription = "Switch camera",
                 modifier = Modifier
-                    .size(55.dp)
+                    .size(30.dp)
                     .background(backgroundColorLocket)
             )
         }
     }
 }
 
-
-
 @Composable
-fun HistoryPart(){
-    //su dung cho toan app
-    val backgroundColorLocket = Color(0xFF111111)
+fun PersonToSeePictureBlock(painterResoureForImage: Int, personName: String){
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .clickable { }
-            .background(backgroundColorLocket)
-//            .fillMaxWidth()
+//                modifier = Modifier.padding(8.dp),
     ) {
-        Text(
-            text = "Lịch sử",
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp
-        )
-        Image(
-            painter = painterResource(id = R.drawable.down_arrow),
-            contentDescription = null,
+        // Tạo một trạng thái để lưu trữ trạng thái bật/tắt của nút
+        val (isToggled, setToggled) = remember { mutableStateOf(false) }
+
+        //Chua xong phan doi mau vien khi click nut
+        // Sử dụng Box để tạo viền ngoài cho nút
+        Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(40.dp)
+//                .size(60.dp) // Kích thước cho toàn bộ Box, bao gồm cả viền (not use to have the auto resize mechanism (LIEMLEE)
+                .border(
+                    width = 4.dp, // Độ dày của viền ngoài
+                    color = Color(0xFF2d2d2d), // Màu viền ngoài
+                    shape = CircleShape
+                )
+                .padding(3.5.dp) // Khoảng cách giữa viền ngoài và viền trong
+                .border(
+                    width = 3.dp, // Độ dày của viền trong
+                    color = Color(0xFF111111), // Màu viền trong
+                    shape = CircleShape
+                )
+                .padding(3.dp) // Khoảng cách giữa viền trong và nội dung
+        ) {
+            FloatingActionButton(
+                onClick = {
+                    // Thay đổi trạng thái khi nút được nhấn
+                    setToggled(!isToggled)
+                },
+                shape = CircleShape,
+                modifier = Modifier.size(30.dp), // Kích thước của nút
+                containerColor = Color(0xFF4f4f4f)
+            ) {
+                Image(
+                    painter = painterResource(id = painterResoureForImage),
+                    contentDescription = "Toggle Button",
+                    modifier = Modifier
+                        .size(15.dp)
+                        .background(
+                            color = Color(0xFF4f4f4f)
+                        )
+                )
+            }
+        }
+        Text(
+            text = personName,
+            fontSize = 10.sp,
+            color = Color(0xFF4f4f4f),
+            fontWeight = FontWeight.Bold
         )
     }
 }
 
 @Composable
-fun CameraScreenTakePicture(navController: NavController) {
+fun HorizontalScrollableRow(items: List<Int>) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp)
+    ) {
+        item {
+            PersonToSeePictureBlock(
+                painterResoureForImage = R.drawable.friends,
+                personName = "Mọi người"
+            )
+        }
+        items(items) { item ->
+            PersonToSeePictureBlock(
+                painterResoureForImage = item,
+                personName = "Liem Lee"
+            )
+        }
+    }
+}
+
+@Composable
+fun LazyRowPersonToSeePicture(){
+    //su dung cho toan app
+    val backgroundColorLocket = Color(0xFF111111)
+    Surface(color = backgroundColorLocket) {
+        HorizontalScrollableRow(
+            items = listOf(
+                R.drawable.send,
+                R.drawable.flash,
+                R.drawable.close,
+                R.drawable.flash,
+                R.drawable.close,
+                R.drawable.flash,
+                R.drawable.close
+            )
+        )
+    }
+}
+
+@Composable
+fun CameraScreenEditPicture(photoUri: Uri) {
     val context = LocalContext.current
     val (currentCamera, setCurrentCamera) = remember { mutableStateOf(CameraSelector.DEFAULT_BACK_CAMERA) }
     val (flashEnabled, setFlashEnabled) = remember { mutableStateOf(false) }
@@ -223,46 +235,6 @@ fun CameraScreenTakePicture(navController: NavController) {
     }
 
     val coroutineScope = rememberCoroutineScope()
-
-
-    fun onPictureCaptured(photoUri: Uri) {
-        // Điều hướng sang màn hình chỉnh sửa ảnh với URI của ảnh đã chụp
-        navController.navigate("edit_picture_screen/${photoUri.toString()}")
-    }
-
-    fun capturePhoto(onPhotoCaptured: (Uri) -> Unit) {
-        if (flashEnabled && currentCamera == CameraSelector.DEFAULT_BACK_CAMERA) {
-            imageCapture.flashMode = ImageCapture.FLASH_MODE_ON
-        } else {
-            imageCapture.flashMode = ImageCapture.FLASH_MODE_OFF
-        }
-
-        val photoFile = File(
-            context.getExternalFilesDir(null),
-            "${System.currentTimeMillis()}.jpg"
-        )
-
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(context),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onError(exception: ImageCaptureException) {
-                    Log.e("CameraPreview", "Photo capture failed: ${exception.message}", exception)
-                }
-
-                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    val savedUri = Uri.fromFile(photoFile)
-                    Log.d("CameraPreview", "Photo capture succeeded: $savedUri")
-                    Toast.makeText(context, "Photo capture succeeded: $savedUri", Toast.LENGTH_SHORT).show()
-                    // Handle the saved image URI here
-//                    navController.navigate("edit_pỉcture_screen/$savedUri")
-                    onPhotoCaptured(savedUri)
-                }
-            }
-        )
-    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         //su dung cho toan app
@@ -275,7 +247,7 @@ fun CameraScreenTakePicture(navController: NavController) {
                 .background(backgroundColorLocket),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TopBar()
+            SendTo()
         }
 
         // Phần giữa của màn hình
@@ -286,9 +258,14 @@ fun CameraScreenTakePicture(navController: NavController) {
                 .background(backgroundColorLocket)
                 .clip(RoundedCornerShape(55.dp))
         ) {
-            CameraPreview(currentCamera, onImageCaptured = { uri ->
-                // Handle captured image URI here
-            }, imageCapture)
+            Image(
+                painter = rememberAsyncImagePainter(photoUri),
+                contentDescription = "Captured Image",
+                modifier = Modifier.fillMaxSize()
+            )
+//            CameraPreview(currentCamera, onImageCaptured = { uri ->
+//                // Handle captured image URI here
+//            }, imageCapture)
         }
         // Phần dưới cùng của màn hình
         Row(
@@ -299,23 +276,7 @@ fun CameraScreenTakePicture(navController: NavController) {
                 .padding(top = 20.dp),
 //            verticalAlignment = Alignment.CenterVertically
         ) {
-            BottomBar(
-                onTakePicture = {
-                    capturePhoto { savedUri ->
-                        onPictureCaptured(savedUri)
-                    }
-                },
-                onSwitchCamera = {
-                    setCurrentCamera(
-                        if (currentCamera == CameraSelector.DEFAULT_BACK_CAMERA)
-                            CameraSelector.DEFAULT_FRONT_CAMERA
-                        else
-                            CameraSelector.DEFAULT_BACK_CAMERA
-                    )
-                },
-                flashEnabled = flashEnabled,
-                onFlashToggle = { setFlashEnabled(!flashEnabled) }
-            )
+            EditButtonInBottomBar()
         }
 
         Row(
@@ -327,7 +288,7 @@ fun CameraScreenTakePicture(navController: NavController) {
                 .weight(0.1875f)
 
         ){
-            HistoryPart()
+            LazyRowPersonToSeePicture()
         }
     }
 }
@@ -509,10 +470,11 @@ fun CameraScreenTakePicture(navController: NavController) {
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun TopBarPreview() {
+fun CameraScreenEditPicturePreview() {
     ApplicationSocketTheme {
-//        HistoryPart()
-
-        TopBar()
+//        SendTo()
+//        EditButtonInBottomBar()
+//        LazyRowPersonToSeePicture()
+        PersonToSeePictureBlock(R.drawable.friends, "User Name")
     }
 }
