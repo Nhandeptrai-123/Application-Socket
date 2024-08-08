@@ -1,7 +1,6 @@
-package com.example.applicationsocket.ViewModel.Screen
+package com.example.applicationsocket.ViewModel.LoginScreen
 
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,13 +9,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,30 +34,24 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.applicationsocket.R
-import com.example.applicationsocket.data.modelUser
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreatedPass(email: String, comback: () -> Unit, getPassEmail: (String, String, Context) -> Unit, ){
-    var pass = remember { mutableStateOf("") }
-    var passcheck = remember { mutableStateOf("") }
+fun CreatedName(userid: String, comback: () -> Unit,  tologin: (String, String, String, Context) -> Unit ){
+    var ho = remember { mutableStateOf("") }
+    var ten = remember { mutableStateOf("") }
     var isTextFieldEmpty by remember { mutableStateOf(true) }
     val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = Color(0xFF111111))
-            .verticalScroll(rememberScrollState())
-            .imePadding(),
+            .background(color = Color(0xFF111111)),
+
         ) {
         //conten 1
         Row(modifier = Modifier.padding(start = 10.dp, top = 15.dp)) {
@@ -93,14 +82,14 @@ fun CreatedPass(email: String, comback: () -> Unit, getPassEmail: (String, Strin
                 horizontalAlignment = Alignment.Start
             )
             {
-                Text(text = "Hãy Nhập Password của Bạn !", fontWeight = FontWeight.Bold,fontSize = 20.sp, color = Color.White)
+                Text(text = "Hãy Nhập họ & tên  !", fontWeight = FontWeight.Bold,fontSize = 20.sp, color = Color.White)
                 Spacer(modifier = Modifier.height(8.dp))
                 TextField(
-                    value = pass.value,
+                    value = ho.value,
                     onValueChange = {
-                        pass.value = it
+                        ho.value = it
                     },
-                    label = { Text("Password",color = Color(0xFFb4b4b4)) },
+                    label = { Text("Họ",color = Color(0xFFb4b4b4)) },
                     modifier = Modifier.fillMaxWidth(),
                     textStyle = TextStyle(color = Color.White),
                     shape = RoundedCornerShape(16.dp),
@@ -109,8 +98,6 @@ fun CreatedPass(email: String, comback: () -> Unit, getPassEmail: (String, Strin
                         unfocusedIndicatorColor = Color.Transparent, // Remove underline when not focused
                         disabledIndicatorColor = Color.Transparent
                     ),
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password)
                 )
             }
         }
@@ -125,16 +112,15 @@ fun CreatedPass(email: String, comback: () -> Unit, getPassEmail: (String, Strin
                 horizontalAlignment = Alignment.Start
             )
             {
-                Text(text = "Xác Nhận lại Pass !", fontWeight = FontWeight.Bold,fontSize = 20.sp, color = Color.White)
                 Spacer(modifier = Modifier.height(8.dp))
                 TextField(
-                    value = passcheck.value,
+                    value = ten.value,
                     onValueChange = {
-                        passcheck.value = it
+                        ten.value = it
                         isTextFieldEmpty = it.isEmpty()
 
                     },
-                    label = { Text("Password",color = Color(0xFFb4b4b4)) },
+                    label = { Text("Tên",color = Color(0xFFb4b4b4)) },
                     modifier = Modifier.fillMaxWidth(),
                     textStyle = TextStyle(color = Color.White),
                     shape = RoundedCornerShape(16.dp),
@@ -143,8 +129,6 @@ fun CreatedPass(email: String, comback: () -> Unit, getPassEmail: (String, Strin
                         unfocusedIndicatorColor = Color.Transparent, // Remove underline when not focused
                         disabledIndicatorColor = Color.Transparent
                     ),
-                    visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Password)
                 )
             }
         }
@@ -180,55 +164,20 @@ fun CreatedPass(email: String, comback: () -> Unit, getPassEmail: (String, Strin
         ){
             Button(
                 onClick = {
-                    if(passcheck.value.length >= 6 ){
-                        if(passcheck.value == pass.value){
-                            getPassEmail( email, pass.value,  context)
-                        }else{
-                            Toast.makeText(context, "Mật khẩu không khớp", Toast.LENGTH_LONG).show()
-                        }
-                    }else{
-                        Toast.makeText(context, "Mật khẩu trên 6 ký tự", Toast.LENGTH_LONG).show()
-                    }
+                    tologin(userid, ho.value, ten.value, context)
                 },
-                        modifier = Modifier
-                            .width(250.dp)
-                            .height(50.dp),
+                modifier = Modifier
+                    .width(250.dp)
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = if (isTextFieldEmpty) Color.Gray else Color.Yellow,
                     contentColor = if (isTextFieldEmpty) Color.White else Color.Black
                 ),
                 enabled = !isTextFieldEmpty
             ) {
-                Text(text = "Tiếp Tục", fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                Text(text = "Đăng Ký", fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
         }
 
     }
-}
-fun saveBasicUserData(userId: String, email: String, pass: String) {
-    val database = FirebaseDatabase.getInstance()
-    val userRef = database.getReference("users").child(userId)
-
-    val user = modelUser(email = email , password = pass)
-    userRef.setValue(user)
-        .addOnSuccessListener {
-            // Successfully saved basic user data
-        }
-        .addOnFailureListener {
-            // Failed to save basic user data
-        }
-}
-
-
-fun checkIfUserExists(email: String, pass: String, context: Context) {
-    val auth = FirebaseAuth.getInstance()
-    auth.signInWithEmailAndPassword(email, pass)
-        .addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                Toast.makeText(context, "Tài khoản đã tồn tại. Vui lòng đăng nhập.", Toast.LENGTH_LONG).show()
-            } else {
-                val errorMessage = task.exception?.message ?: "Unknown error"
-                Toast.makeText(context, "Đăng nhập thất bại: $errorMessage", Toast.LENGTH_LONG).show()
-            }
-        }
 }

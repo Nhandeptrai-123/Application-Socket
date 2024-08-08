@@ -1,4 +1,4 @@
-package com.example.applicationsocket.ViewModel.Screen
+package com.example.applicationsocket.ViewModel.LoginScreen
 
 import android.os.Handler
 import android.os.Looper
@@ -28,8 +28,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,25 +36,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
-import com.example.applicationsocket.MainNaviga
-import com.example.applicationsocket.Navigation.ScreenLogin
 import com.example.applicationsocket.R
 import com.example.applicationsocket.SeverMyEmail
-import com.example.applicationsocket.ViewModel.ShareModel.SharedEmailModel
-import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
 import kotlinx.coroutines.delay
 
 

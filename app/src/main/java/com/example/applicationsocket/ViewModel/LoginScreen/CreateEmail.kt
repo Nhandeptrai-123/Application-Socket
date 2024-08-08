@@ -1,6 +1,5 @@
-package com.example.applicationsocket.ViewModel.Screen
+package com.example.applicationsocket.ViewModel.LoginScreen
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -40,7 +39,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
@@ -50,7 +48,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import com.example.applicationsocket.R
 import com.example.applicationsocket.SeverMyEmail
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -62,9 +59,10 @@ import com.google.firebase.database.ValueEventListener
 // navController: NavController
 fun CreatedEmail( openloginOTP: (String,String) -> Unit, comback: () -> Unit){
     var email = remember { mutableStateOf("") }
-    var isTextFieldEmpty by remember { mutableStateOf(true) }
+    var isTextFieldEmpty = email.value.isEmpty()
     val context = LocalContext.current
     val isEmailValid = remember { mutableStateOf(true) }
+    val isButtonClicked = remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
     Column(
         modifier = Modifier
@@ -163,19 +161,22 @@ fun CreatedEmail( openloginOTP: (String,String) -> Unit, comback: () -> Unit){
         ){
             Button(
                 onClick = {
+                    if (isButtonClicked.value) return@Button // Nếu nút đã được nhấn, không thực hiện hành động gì thêm
+
+                    isButtonClicked.value = true // Đánh dấu nút đã được nhấn
+
                     val emailService = SeverMyEmail()
                     val handler = Handler(Looper.getMainLooper())
                     val database = FirebaseDatabase.getInstance()
                     val usersRef = database.getReference("users")
 
                     usersRef.orderByChild("email").equalTo(email.value)
-                        .addListenerForSingleValueEvent(object :
-                            ValueEventListener {
+                        .addListenerForSingleValueEvent(object : ValueEventListener {
                             override fun onDataChange(snapshot: DataSnapshot) {
                                 if (snapshot.exists()) {
                                     isEmailValid.value = false
-                                    Toast.makeText(context, "Email đã tồn tại !", Toast.LENGTH_LONG)
-                                        .show()
+                                    Toast.makeText(context, "Email đã tồn tại !", Toast.LENGTH_LONG).show()
+                                    isButtonClicked.value = false // Khôi phục trạng thái nếu email đã tồn tại
                                 } else {
                                     val otp = generateOTP()
                                     Log.d("OTP", otp)
@@ -192,24 +193,26 @@ fun CreatedEmail( openloginOTP: (String,String) -> Unit, comback: () -> Unit){
                                                 val errorText = errorMessage ?: "Đã xảy ra lỗi khi gửi OTP"
                                                 Toast.makeText(context, "Gửi OTP Thất Bại: $errorText", Toast.LENGTH_LONG).show()
                                             }
+                                            isButtonClicked.value = false // Khôi phục trạng thái sau khi gửi email xong
                                         }
+                                    }
                                 }
                             }
-                        }
 
-                        override fun onCancelled(error: DatabaseError) {
-                            Toast.makeText(context, "Lỗi !", Toast.LENGTH_LONG).show()
-                        }
-                    })
+                            override fun onCancelled(error: DatabaseError) {
+                                Toast.makeText(context, "Lỗi !", Toast.LENGTH_LONG).show()
+                                isButtonClicked.value = false // Khôi phục trạng thái khi có lỗi
+                            }
+                        })
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = if (isTextFieldEmpty) Color.Gray else Color.Yellow,
-                    contentColor = if (isTextFieldEmpty) Color.White else Color.Black
+                    containerColor = if (isTextFieldEmpty || isButtonClicked.value) Color.Gray else Color.Yellow,
+                    contentColor = if (isTextFieldEmpty || isButtonClicked.value) Color.White else Color.Black
                 ),
-                enabled = !isTextFieldEmpty
+                enabled = !isTextFieldEmpty && !isButtonClicked.value // Đảm bảo nút không thể nhấn khi đã nhấn
             ) {
                 Text(text = "Tiếp tục", fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }

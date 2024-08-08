@@ -6,12 +6,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -24,19 +19,17 @@ import com.example.applicationsocket.ViewModel.ProfileUser.mainChangePass
 import com.example.applicationsocket.ViewModel.ProfileUser.mainScreenChanceName
 import com.example.applicationsocket.ViewModel.ProfileUser.mainScreenFeedback
 import com.example.applicationsocket.ViewModel.ProfileUser.mainScreenProfile
-import com.example.applicationsocket.ViewModel.Screen.CreatedEmail
-import com.example.applicationsocket.ViewModel.Screen.CreatedName
-import com.example.applicationsocket.ViewModel.Screen.CreatedPass
-import com.example.applicationsocket.ViewModel.Screen.LoginScreen
-import com.example.applicationsocket.ViewModel.Screen.ScreenLogin
-import com.example.applicationsocket.ViewModel.Screen.checkIfUserExists
-import com.example.applicationsocket.ViewModel.Screen.completeCreate
-import com.example.applicationsocket.ViewModel.Screen.createOTP
-import com.example.applicationsocket.ViewModel.Screen.generateOTP
-import com.example.applicationsocket.ViewModel.Screen.saveBasicUserData
+import com.example.applicationsocket.ViewModel.LoginScreen.CreatedEmail
+import com.example.applicationsocket.ViewModel.LoginScreen.CreatedName
+import com.example.applicationsocket.ViewModel.LoginScreen.CreatedPass
+import com.example.applicationsocket.ViewModel.LoginScreen.LoginScreen
+import com.example.applicationsocket.ViewModel.LoginScreen.ScreenLogin
+import com.example.applicationsocket.ViewModel.LoginScreen.checkIfUserExists
+import com.example.applicationsocket.ViewModel.LoginScreen.completeCreate
+import com.example.applicationsocket.ViewModel.LoginScreen.createOTP
+import com.example.applicationsocket.ViewModel.LoginScreen.saveBasicUserData
 import com.example.applicationsocket.data.UserIDModel
 import com.example.applicationsocket.data.UserSessionViewModel
-import com.example.applicationsocket.data.getUserEmail
 import com.example.applicationsocket.data.getUserName
 import com.example.applicationsocket.data.modelNameUser
 //import com.example.applicationsocket.ViewModel.Screen.ScreenLoginEmail
@@ -46,12 +39,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
-import com.sun.mail.iap.Argument
-import kotlin.math.log
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -136,9 +124,9 @@ fun MainNaviga(){
                                 if (task.isSuccessful) {
                                     val user = auth.currentUser
                                     user?.let {
-                                        val userId = it.uid
-                                        saveBasicUserData(userId, email, pass)
-                                        navController.navigate("CreateName/$userId")
+//                                        val userId = it.uid
+                                        saveBasicUserData(email, pass)
+                                        navController.navigate("CreateName/$email")
                                     }
                                 } else {
                                     checkIfUserExists(email, pass, context)
@@ -148,21 +136,21 @@ fun MainNaviga(){
                 )
             }
 
-            composable("CreateName/{userid}",
+            composable("CreateName/{email}",
             arguments = listOf(
-                navArgument("userid") { type = NavType.StringType }
+                navArgument("email") { type = NavType.StringType }
             )
             ){backStackEntry ->
-                val userid = backStackEntry.arguments?.getString("userid")
-                requireNotNull(userid)// Provide a default value if null
+                val email = backStackEntry.arguments?.getString("email")
+                requireNotNull(email)// Provide a default value if null
                 CreatedName(
-                    userid = userid,
+                    userid = email,
                     comback = {
                         navController.navigate("HomeLogin")
                     },
-                    tologin = {userid , ho, ten , context ->
+                    tologin = {email , ho, ten , context ->
                         val database = FirebaseDatabase.getInstance()
-                        val userRef = database.getReference("users").child(userid).child("information")
+                        val userRef = database.getReference("users").child(encodeEmail(email)).child("information")
 
                         val information = modelNameUser(ho, ten)
 
@@ -192,38 +180,38 @@ fun MainNaviga(){
                         navController.navigate("homeLogin")
                     },
                     getPassEmail = {email, pass, context ->
-                        login(email, pass, context, userViewModel, userIDModel ) { userId ->
-                            navController.navigate("Home/$userId")
+                        login(email, pass, context, userViewModel, userIDModel ) { email ->
+                            navController.navigate("Home/$email")
                         }
                     },
                 )
             }
             composable(
-                "Home/{userId}",
-                arguments = listOf(navArgument("userId") { type = NavType.StringType })
+                "Home/{email}",
+                arguments = listOf(navArgument("email") { type = NavType.StringType })
             ) { backStackEntry ->
-                val userId = backStackEntry.arguments?.getString("userId")
-                requireNotNull(userId) // Ensure userId is not null
-                Home(userID = userId,
+                val email = backStackEntry.arguments?.getString("email")
+                requireNotNull(email) // Ensure userId is not null
+                Home(userID = email,
                     userViewModel = userViewModel,
                     idmodelUser = userIDModel,
                     toProfile = {
-                        navController.navigate("profile/$userId")
+                        navController.navigate("profile/$email")
                     },
                     toFriendList = {
-                        navController.navigate("friendList/$userId")
+                        navController.navigate("friendList/$email")
                     }
                 )
             }
 
-            composable("profile/{userId}",
-                arguments = listOf(navArgument("userId") { type = NavType.StringType })
+            composable("profile/{email}",
+                arguments = listOf(navArgument("email") { type = NavType.StringType })
             ){backStackEntry ->
-                val userid = backStackEntry.arguments?.getString("userId")
-                requireNotNull(userid)// Provide a default value if null
-                mainScreenProfile(userid,userViewModel,userIDModel,
+                val email = backStackEntry.arguments?.getString("email")
+                requireNotNull(email)// Provide a default value if null
+                mainScreenProfile(email,userViewModel,userIDModel,
                     comback = {
-                        navController.navigate("Home/$userid")
+                        navController.navigate("Home/$email")
                     },
                     tologout = {
                         navController.navigate("homeLogin") {
@@ -232,59 +220,59 @@ fun MainNaviga(){
                         }
                     },
                     toChangeName = {
-                        navController.navigate("ChangeName/$userid")
+                        navController.navigate("ChangeName/$email")
                     },
                     toChangePass = {
-                        navController.navigate("ChangePass/$userid")
+                        navController.navigate("ChangePass/$email")
                     },
                     toSendFeedBack = {
-                        navController.navigate("sendFeedBack/$userid")
+                        navController.navigate("sendFeedBack/$email")
                     },
                     )
             }
-            composable("ChangeName/{userid}",
+            composable("ChangeName/{email}",
                 arguments = listOf(
-                    navArgument("userid") { type = NavType.StringType } ,
+                    navArgument("email") { type = NavType.StringType } ,
                 )
                 ){
-                val userid = it.arguments?.getString("userid")
-                requireNotNull(userid)// Provide a default value if null
-                mainScreenChanceName(userModel = userViewModel, userid,
+                val email = it.arguments?.getString("email")
+                requireNotNull(email)// Provide a default value if null
+                mainScreenChanceName(userModel = userViewModel, email,
                     comback = {
-                        navController.navigate("profile/$userid")
+                        navController.navigate("profile/$email")
                     }
                 )
 
             }
-            composable("ChangePass/{userid}",
-                arguments = listOf(navArgument("userid") { type = NavType.StringType },)
+            composable("ChangePass/{email}",
+                arguments = listOf(navArgument("email") { type = NavType.StringType },)
                 ){
-                val userid = it.arguments?.getString("userid")
-                requireNotNull(userid)// Provide a default value if null
-                mainChangePass(userid,userIDModel,
+                val email = it.arguments?.getString("email")
+                requireNotNull(email)// Provide a default value if null
+                mainChangePass(email,userIDModel,
                     comback = {
-                        navController.navigate("profile/$userid")
+                        navController.navigate("profile/$email")
                     })
 
             }
-            composable("sendFeedBack/{userid}",
-                arguments = listOf(navArgument("userid") { type = NavType.StringType })
+            composable("sendFeedBack/{email}",
+                arguments = listOf(navArgument("email") { type = NavType.StringType })
                 ){
-                val userid = it.arguments?.getString("userid")
-                requireNotNull(userid)// Provide a default value if null
-                mainScreenFeedback( userid, userIDModel,
+                val email = it.arguments?.getString("email")
+                requireNotNull(email)// Provide a default value if null
+                mainScreenFeedback( email, userIDModel,
                     comback = {
-                        navController.navigate("profile/$userid")
+                        navController.navigate("profile/$email")
                     })
             }
-            composable("friendList/{userId}",
-                arguments = listOf(navArgument("userId") { type = NavType.StringType })
+            composable("friendList/{email}",
+                arguments = listOf(navArgument("email") { type = NavType.StringType })
                 ){
-                val userId = it.arguments?.getString("userId")
-                requireNotNull(userId)// Provide a default value if null
-                mainListFriend(userIDModel,userId,
+                val email = it.arguments?.getString("email")
+                requireNotNull(email)// Provide a default value if null
+                mainListFriend(userIDModel,email,
                     comback = {
-                        navController.navigate("Home/$userId")
+                        navController.navigate("Home/$email")
                     },)
 
             }
@@ -297,11 +285,11 @@ fun login(email: String, pass: String, context: Context, userViewModel: UserSess
     auth.signInWithEmailAndPassword(email, pass).addOnCompleteListener { task ->
         if (task.isSuccessful) {
             Toast.makeText(context, "Đăng nhập thành công", Toast.LENGTH_LONG).show()
-            val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
-
+//            val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
+            val emailuser = encodeEmail(email)
             // nêm truyền ữ liệu sau khi đăng nhập để dễ goji và sữ đụng
-            getUserName(userId, context, userViewModel, togoHome = {
-                toHome(userId)
+            getUserName(emailuser, context, userViewModel, togoHome = {
+                toHome(emailuser)
             })
         } else {
             val errorMessage = task.exception?.let {
@@ -314,4 +302,11 @@ fun login(email: String, pass: String, context: Context, userViewModel: UserSess
             Toast.makeText(context, errorMessage, Toast.LENGTH_LONG).show()
         }
     }
+}
+fun encodeEmail(email: String): String {
+    return email.replace(".", ",")
+        .replace("#", "%23")
+        .replace("$", "%24")
+        .replace("[", "%5B")
+        .replace("]", "%5D")
 }

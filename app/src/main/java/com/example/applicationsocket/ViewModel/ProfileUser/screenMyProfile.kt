@@ -57,10 +57,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.example.applicationsocket.ViewModel.Screen.generateOTP
 import com.example.applicationsocket.data.UserIDModel
 import com.example.applicationsocket.data.UserSessionViewModel
 import com.example.applicationsocket.data.modelNameUser
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import java.util.UUID
@@ -86,57 +86,64 @@ fun CircularImage(imageURI: String?, contentImage: String){
 }
 //hàm này xoá ảnh sau khi kiem tra imageprofileuser có ảnh cũ không
 fun deleteImageFromFirebaseStorage(imageUrl: String, onSuccess: () -> Unit, onFailure: () -> Unit) {
-    val storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrl)
-    storageReference.delete()
-        .addOnSuccessListener { onSuccess() }
-        .addOnFailureListener { onFailure() }
+    if (imageUrl.isEmpty()) {
+        Log.e("FirebaseStorage", "Cannot delete image: URL is empty")
+        onFailure()
+        return
+    }
+
+    try {
+        val storageReference = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrl)
+        storageReference.delete()
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onFailure() }
+    } catch (e: IllegalArgumentException) {
+        Log.e("FirebaseStorage", "Invalid URI: $imageUrl", e)
+        onFailure()
+    }
 }
 
-fun uploadImageToFirebaseStorage(userID: String, imageUri: Uri, context: Context, onUploadSuccess: (String) -> Unit) {
+
+
+
+fun uploadImageToFirebaseStorage(email: String, imageUri: Uri, context: Context, onUploadSuccess: (String) -> Unit) {
     val database = FirebaseDatabase.getInstance()
-    val userRef = database.getReference("users").child(userID).child("information")
+    val userRef = database.getReference("users").child(email).child("information")
 
     // Kiểm tra và xóa ảnh cũ nếu có
-    getImageProfileUser(userID) { existingImageUrl ->
-        existingImageUrl?.let { url ->
-            deleteImageFromFirebaseStorage(url.toString(), {
-                // Tiếp tục tải lên ảnh mới sau khi đã xoá ảnh cũ
-                val storageReference = FirebaseStorage.getInstance().reference
-                val imageRef = storageReference.child("imagesProfile/${UUID.randomUUID()}.jpg")
-
-                imageRef.putFile(imageUri)
-                    .addOnSuccessListener {
-                        imageRef.downloadUrl.addOnSuccessListener { uri ->
-                            // Cập nhật URL ảnh mới vào Realtime Database
-                            userRef.child("imageProfileUser").setValue(uri.toString())
-                            onUploadSuccess(uri.toString())
-                        }
-                    }
-                    .addOnFailureListener { exception ->
-                        Toast.makeText(context, "Upload failed: ${exception.message}", Toast.LENGTH_SHORT).show()
-                    }
+    getImageProfileUser(email) { existingImageUrl ->
+        existingImageUrl?.imageProfileUser?.let { url ->
+            deleteImageFromFirebaseStorage(url, {
+                // Xóa ảnh cũ thành công, tiếp tục tải lên ảnh mới
+                uploadNewImage(imageUri, userRef, onUploadSuccess, context)
             }, {
                 Toast.makeText(context, "Failed to delete old image", Toast.LENGTH_SHORT).show()
             })
         } ?: run {
             // Không có ảnh cũ, tiếp tục tải lên ảnh mới
-            val storageReference = FirebaseStorage.getInstance().reference
-            val imageRef = storageReference.child("imagesProfile/${UUID.randomUUID()}.jpg")
-
-            imageRef.putFile(imageUri)
-                .addOnSuccessListener {
-                    imageRef.downloadUrl.addOnSuccessListener { uri ->
-                        // Cập nhật URL ảnh mới vào Realtime Database
-                        userRef.child("imageProfileUser").setValue(uri.toString())
-                        onUploadSuccess(uri.toString())
-                    }
-                }
-                .addOnFailureListener { exception ->
-                    Toast.makeText(context, "Upload failed: ${exception.message}", Toast.LENGTH_SHORT).show()
-                }
+            uploadNewImage(imageUri, userRef, onUploadSuccess, context)
         }
     }
 }
+
+
+private fun uploadNewImage(imageUri: Uri, userRef: DatabaseReference, onUploadSuccess: (String) -> Unit, context: Context) {
+    val storageReference = FirebaseStorage.getInstance().reference
+    val imageRef = storageReference.child("imagesProfile/${UUID.randomUUID()}.jpg")
+
+    imageRef.putFile(imageUri)
+        .addOnSuccessListener {
+            imageRef.downloadUrl.addOnSuccessListener { uri ->
+                // Cập nhật URL ảnh mới vào Realtime Database
+                userRef.child("imageProfileUser").setValue(uri.toString())
+                onUploadSuccess(uri.toString())
+            }
+        }
+        .addOnFailureListener { exception ->
+            Toast.makeText(context, "Upload failed: ${exception.message}", Toast.LENGTH_SHORT).show()
+        }
+}
+
 //hàm này chọn ảnh của máy user
 @Composable
 fun ImagePicker(onImageSelected: (Uri) -> Unit) {
@@ -157,12 +164,12 @@ fun ImagePicker(onImageSelected: (Uri) -> Unit) {
     }
 }
 
-fun getImageProfileUser(userID: String, onSuccess: (modelNameUser?) -> Unit) {
+fun getImageProfileUser(email: String, onSuccess: (modelNameUser?) -> Unit) {
     val database = FirebaseDatabase.getInstance()
-    val imageUser = database.getReference("users").child(userID).child("information")
+    val imageUser = database.getReference("users").child(email).child("information")
 
     imageUser.get()
-        .addOnSuccessListener  { task ->
+        .addOnSuccessListener { task ->
             val imageProfileUser = task.child("imageProfileUser").getValue(String::class.java)
             val firstName = task.child("firstName").getValue(String::class.java)
             val lastName = task.child("lastName").getValue(String::class.java)
@@ -173,25 +180,26 @@ fun getImageProfileUser(userID: String, onSuccess: (modelNameUser?) -> Unit) {
                 lastName = lastName
             )
             onSuccess(userInformation)
-        }.addOnFailureListener { task ->
-            Log.e("FirebaseDatabase", "Error getting data ImageUser", task)
+        }
+        .addOnFailureListener { exception ->
+            Log.e("FirebaseDatabase", "Error getting data ImageUser", exception)
             onSuccess(null)
         }
 }
 
-@Composable
-fun imageVSnameProfile( UserID:String, user: UserSessionViewModel, comback: () -> Unit){
-    var userInfor by remember { mutableStateOf<modelNameUser?>(null) }
-    var context = LocalContext.current
-    val userInformation = user.userInformation.observeAsState().value
 
-    // lấy dữ liệu imageUser từ firebase
-    LaunchedEffect(UserID) {
-        getImageProfileUser(UserID) { infor ->
+@Composable
+fun imageVSnameProfile(email: String, user: UserSessionViewModel, comback: () -> Unit) {
+    var userInfor by remember { mutableStateOf<modelNameUser?>(null) }
+    val context = LocalContext.current
+
+    // Lấy dữ liệu imageUser từ firebase
+    LaunchedEffect(email) {
+        getImageProfileUser(email) { infor ->
             userInfor = infor
         }
-
     }
+
     FloatingActionButton(
         onClick = {
             comback()
@@ -207,36 +215,39 @@ fun imageVSnameProfile( UserID:String, user: UserSessionViewModel, comback: () -
             contentDescription = "Floating action button"
         )
     }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 20.dp, start = 20.dp, end = 20.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
-    ){
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            CircularImage("${userInfor?.imageProfileUser}", "Profile Image")
+            // Hiển thị ảnh người dùng
+            CircularImage(imageURI = userInfor?.imageProfileUser, contentImage = "Profile Image")
             Spacer(modifier = Modifier.height(7.dp))
-            Text(text = "${userInfor?.firstName} ${userInfor?.lastName}",
+            Text(
+                text = "${userInfor?.firstName} ${userInfor?.lastName}",
                 color = Color.White,
-                fontSize = 20.sp,
-//                modifier = Modifier.align(Alignment.CenterHorizontally)
+                fontSize = 20.sp
             )
             Spacer(modifier = Modifier.height(1.dp))
-            ImagePicker(onImageSelected = { uri ->
-                uploadImageToFirebaseStorage(UserID,uri, context) { uploadedImageUrl ->
-                    userInfor?.imageProfileUser = uploadedImageUrl
+            ImagePicker { uri ->
+                uploadImageToFirebaseStorage(email, uri, context) { uploadedImageUrl ->
+                    // Cập nhật userInfor với ảnh mới
+                    userInfor = userInfor?.copy(imageProfileUser = uploadedImageUrl)
                 }
-            })
+            }
         }
     }
-
 }
+
 
 @Composable
 fun categoryChanceProfile(toChangeName: () -> Unit, toChangePass: () -> Unit, toSendFeedBack: () -> Unit){
@@ -359,7 +370,7 @@ fun signOutProfile(usermodel: UserSessionViewModel, tologout: () -> Unit){
 }
 
 @Composable
-fun mainScreenProfile(UserID:String,usermodel: UserSessionViewModel,userIDModel: UserIDModel,
+fun mainScreenProfile(email:String,usermodel: UserSessionViewModel,userIDModel: UserIDModel,
                       comback: () -> Unit,
                       tologout: () -> Unit,
                       toChangeName: () -> Unit,
@@ -371,7 +382,7 @@ fun mainScreenProfile(UserID:String,usermodel: UserSessionViewModel,userIDModel:
         .fillMaxSize()
         .background(Color(0xFF111111))) {
         item {
-            imageVSnameProfile(UserID,usermodel, comback)
+            imageVSnameProfile(email,usermodel, comback)
         }
         item {
             categoryChanceProfile(toChangeName, toChangePass, toSendFeedBack)

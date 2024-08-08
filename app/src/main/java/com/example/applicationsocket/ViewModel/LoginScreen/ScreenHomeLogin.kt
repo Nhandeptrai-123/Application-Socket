@@ -1,4 +1,4 @@
-package com.example.applicationsocket.ViewModel.Screen
+package com.example.applicationsocket.ViewModel.LoginScreen
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
@@ -28,12 +28,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.applicationsocket.R
-
-import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
 
 import kotlinx.coroutines.delay
 

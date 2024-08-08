@@ -86,7 +86,7 @@ dependencies {
     implementation("com.squareup.moshi:moshi-kotlin:1.13.0")
 
     implementation("com.fatherofapps:jnav:1.0.2")
-    ksp("com.fatherofapps:jnav:1.0.2")
+//    ksp("com.fatherofapps:jnav:1.0.2")
     // Add the dependency for the Firebase Authentication library
     // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation("com.google.firebase:firebase-auth")
@@ -104,5 +104,4 @@ dependencies {
     // When using the BoM, you don't specify versions in Firebase library dependencies
     implementation("com.google.firebase:firebase-database")
     implementation ("io.coil-kt:coil-compose:2.1.0")
-
 }

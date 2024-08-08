@@ -25,7 +25,7 @@ fun Home(userID: String, userViewModel: UserSessionViewModel,idmodelUser: UserID
     getUserEmail(userID, idmodelUser)
     val userid = idmodelUser.userID.observeAsState().value
     Column {
-        Text(text = "Welcome, ${userInformation?.firstName} ${userInformation?.lastName} and ${userID} và email: ${userid?.email}")
+        Text(text = "Welcome, ${userInformation?.firstName} ${userInformation?.lastName}  và email: ${userid?.email}")
         Button(onClick = { toProfile() }) {
             Text(text = "Đêsn Profile")
         }

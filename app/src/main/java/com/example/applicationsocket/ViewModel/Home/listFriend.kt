@@ -55,8 +55,10 @@ import com.example.applicationsocket.ViewModel.ProfileUser.uploadData
 import com.example.applicationsocket.ViewModel.ProfileUser.uploadPass
 import com.example.applicationsocket.data.UserIDModel
 import com.example.applicationsocket.data.UserSessionViewModel
+import com.example.applicationsocket.data.addFriend
 import com.example.applicationsocket.data.modelNameUser
 import com.example.applicationsocket.data.modelUser
+import com.example.applicationsocket.encodeEmail
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -74,11 +76,12 @@ fun bodyListFriendScreen(userIdModel: UserIDModel, userid: String){
         FriendScreen(userIdModel, userid)
     }
 }
+
 @Composable
 fun FriendScreen(userIdModel: UserIDModel, userid: String) {
     var selectedTabIndex by remember { mutableStateOf(0) }
 
-    val tabs = listOf("Tìm kiếm bạn bè", "Danh sách bạn bè")
+    val tabs = listOf("Danh sách bạn bè", " Tìm kiếm bạn bè")
 
     Column(modifier = Modifier.fillMaxSize()) {
         TabRow(selectedTabIndex = selectedTabIndex) {
@@ -99,11 +102,143 @@ fun FriendScreen(userIdModel: UserIDModel, userid: String) {
         }
 
         when (selectedTabIndex) {
-//            1 -> ListFriendScreen(userIdModel, userid)
-            0 -> SearchFriendScreen(userIdModel, userid)
+            0 -> ListFriendScreen(userIdModel, userid)
+            1 -> SearchFriendScreen(userIdModel, userid)
         }
     }
 }
+fun fetchFriendRequests(email: String, onSuccess: (List<Pair<String, Boolean>>) -> Unit) {
+    val database = FirebaseDatabase.getInstance().reference
+    val userEncoded = encodeEmail(email)
+
+    val friendListRef = database.child("users").child(userEncoded).child("friendList")
+
+    friendListRef.addListenerForSingleValueEvent(object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            if (snapshot.exists()) {
+                Log.d("FirebaseDatabase", "Snapshot exists")
+                val friendRequests = snapshot.children.mapNotNull {
+                    val friendEmail = it.child("email").getValue(String::class.java)
+                    val isAccepted = it.child("status").getValue(Boolean::class.java) ?: false
+                    Log.d("FirebaseDatabaseFriend", "Friend Email: $friendEmail, Status: $isAccepted")
+                    if (friendEmail != null) Pair(friendEmail, isAccepted) else null
+                }
+                onSuccess(friendRequests)
+            } else {
+                Log.d("FirebaseDatabase", "No friend requests found")
+                onSuccess(emptyList())
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            Log.e("FirebaseDatabase", "Error fetching friend requests", error.toException())
+            onSuccess(emptyList())
+        }
+    })
+}
+
+
+
+
+
+@Composable
+fun ListFriendScreen(userIdModel: UserIDModel, userEmail: String) {
+    var friendRequests by remember { mutableStateOf<List<Pair<String, Boolean>>>(emptyList()) }
+
+    Log.e("ListFriendScreen", "ListFriendScreen: $userEmail")
+    // Fetch friend requests when the composable is launched
+    LaunchedEffect(userEmail) {
+        fetchFriendRequests(userEmail) { requests ->
+            friendRequests = requests
+        }
+    }
+
+    LazyColumn(modifier = Modifier.fillMaxSize()) {
+        items(friendRequests) { request ->
+            val friendEmail = request.first
+            val isAccepted = request.second
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(85.dp)
+                    .padding(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = friendEmail,
+                    color = if (isAccepted) Color.Green else Color.Gray,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp)
+                )
+
+                if (!isAccepted) {
+                    Button(
+                        onClick = {
+                            acceptFriendRequest(userEmail, friendEmail) {
+                                // Update the list to reflect the change
+                                friendRequests = friendRequests.map {
+                                    if (it.first == friendEmail) it.copy(second = true) else it
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                    ) {
+                        Text("Accept")
+                    }
+                }
+
+                Button(
+                    onClick = {
+                        deleteFriendRequest(userEmail, friendEmail) {
+                            // Remove the friend request from the list
+                            friendRequests = friendRequests.filter { it.first != friendEmail }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Red,
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text("Delete")
+                }
+            }
+        }
+    }
+}
+
+
+fun acceptFriendRequest(userEmail: String, friendEmail: String, onComplete: () -> Unit) {
+    val database = FirebaseDatabase.getInstance().reference
+    val userEncoded = encodeEmail(userEmail)
+    val friendEncoded = encodeEmail(friendEmail)
+
+    val friendRequestRef = database.child("users").child(userEncoded).child("friendList").child(friendEmail)
+
+    // Set the status to true
+    friendRequestRef.child("status").setValue(true).addOnCompleteListener {
+        onComplete()
+    }
+}
+
+fun deleteFriendRequest(userEmail: String, friendEmail: String, onComplete: () -> Unit) {
+    val database = FirebaseDatabase.getInstance().reference
+    val userEncoded = encodeEmail(userEmail)
+    val friendEncoded = encodeEmail(friendEmail)
+
+    val userFriendRequestRef = database.child("users").child(userEncoded).child("friendList").child(friendEncoded)
+    val friendFriendRequestRef = database.child("users").child(friendEncoded).child("friendList").child(userEncoded)
+
+    // Remove the friend request for both users
+    userFriendRequestRef.removeValue().addOnCompleteListener {
+        friendFriendRequestRef.removeValue().addOnCompleteListener {
+            onComplete()
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchFriendScreen(userIdModel: UserIDModel, userid: String) {
@@ -156,14 +291,13 @@ fun SearchFriendScreen(userIdModel: UserIDModel, userid: String) {
                 )
             }
         }
-        listFriend(searchResults,searchEmail.value)
+        listFriend(searchResults,searchEmail.value,userIdModel.userID.value?.email.toString())
 
     }
 }
-fun encodeEmail(email: String): String {
-    return email.replace(".", ",")
-}
 
+
+//hàm lấy ảnh  này còn lỗi chưa lấy được ảnh
 fun getImageFriend(searchEmail: String, onSuccess: (modelNameUser?) -> Unit) {
     val database = FirebaseDatabase.getInstance()
     val encodedEmail = encodeEmail(searchEmail) // Encode email to be a valid Firebase path
@@ -188,10 +322,11 @@ fun getImageFriend(searchEmail: String, onSuccess: (modelNameUser?) -> Unit) {
         }
 }
 
-
 @Composable
-fun listFriend(searchResults: List<modelUser>,searchEmail : String) {
+fun listFriend(searchResults: List<modelUser>,searchEmail : String, email: String) {
+    var isButtonEnabled by remember { mutableStateOf(true) }
     var userImage by remember { mutableStateOf<modelNameUser?>(null) }
+    val context = LocalContext.current
     LaunchedEffect(searchEmail) {
         getImageFriend(searchEmail) { image ->
             userImage = image
@@ -209,26 +344,24 @@ fun listFriend(searchResults: List<modelUser>,searchEmail : String) {
                     .padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = user.email ?: "",
-                        color = Color.Gray,
-                        modifier = Modifier
-                            .weight(0.4f)
-                            .padding(start = 8.dp)
+                    CircularImage(
+                        userImage?.imageProfileUser,
+                        "profileFriend"
                     )
-                    Text(
-                        text = "${userImage?.firstName} ${userImage?.lastName}",
-                        color = Color.White,
-                        modifier = Modifier
-                            .weight(0.6f)
-                            .padding(start = 8.dp, top = 5.dp)
-                    )
-                }
-
+                Text(
+                    text = user.email ?: "",
+                    color = Color.White,
+                    modifier = Modifier
+                        .weight(0.4f)
+                        .padding(start = 8.dp)
+                )
                 Button(
                     onClick = {
-
+                        if(isButtonEnabled){
+                            sendEmailFriend(user.email ?: "",email)
+                            Toast.makeText(context, "Đã gửi lời mời kết bạn", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
                     },
                     modifier = Modifier
                         .width(78.dp)
@@ -237,14 +370,53 @@ fun listFriend(searchResults: List<modelUser>,searchEmail : String) {
                         containerColor =  Color.Yellow,
                         contentColor =  Color.Black
                     ),
+                    enabled = isButtonEnabled
                 ) {
                     Text("Add")
                 }
+                }
+
+
             }
         }
-    }
 }
 
+//hàm này có chức khi add thì lưu id người add (false) và người được add (false) vào nhánh friendlist của nhau
+fun sendEmailFriend(emailFriend: String, email: String){
+    val database = FirebaseDatabase.getInstance().getReference()
+
+    // Mã hóa địa chỉ email trước khi sử dụng chúng trong đường dẫn Firebase
+    val emailFriendcode = encodeEmail(emailFriend)
+    val emailcode = encodeEmail(email)
+
+    // Sử dụng các biến mã hóa cho các tham chiếu đường dẫn
+    val friendlitref = database.child("users").child(emailcode).child("friendList")
+    val emaillistref = database.child("users").child(emailFriendcode).child("friendList")
+
+    val senEmailFriend = addFriend(emailFriendcode, true)
+    val sendEmail = addFriend(emailcode, false)
+
+    // Sử dụng email mã hóa cho các khóa của bản ghi
+    friendlitref.child(emailFriendcode).setValue(senEmailFriend)
+    emaillistref.child(emailcode).setValue(sendEmail)
+}
+
+
+fun accepFriend(emailFriend: String,email: String){
+    val database = FirebaseDatabase.getInstance().getReference()
+
+    val emailFriendcode = encodeEmail(emailFriend)
+    val emailcode = encodeEmail(email)
+
+    val friendlitref = database.child("users").child(emailFriendcode).child("friendList")
+    val emaillistref = database.child("users").child(emailcode).child("friendList")
+
+//    val accepemailFriend = addFriend(emailFriendcode, true)
+    val accepemail = addFriend(emailcode, true)
+//    friendlitref.child(emailcode).setValue(accepemailFriend)
+    emaillistref.child(emailFriendcode).setValue(accepemail)
+}
+//
 
 
 fun searchForUsers(email: String, onSuccess: (List<modelUser>) -> Unit) {
@@ -285,5 +457,5 @@ fun mainListFriend( useridModel: UserIDModel, userID: String, comback: () -> Uni
 @Composable
 fun PreviewListFriend(){
     mainListFriend(comback = {}, useridModel = UserIDModel(), userID = "123")
-//    listFriend(searchResults = listOf(modelUser("123","dfsb")),searchEmail = "123")
+//    listFriend(searchResults = listOf(modelUser("123","dfsb")),searchEmail = "123", email = "123")
 }

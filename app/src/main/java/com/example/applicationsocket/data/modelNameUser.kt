@@ -27,9 +27,9 @@ class UserSessionViewModel : ViewModel() {
         _userInformation.value = null
     }
 }
-fun getUserName(userID: String, context: Context, userViewModel: UserSessionViewModel, togoHome: () -> Unit) {
+fun getUserName(email: String, context: Context, userViewModel: UserSessionViewModel, togoHome: () -> Unit) {
     val database = FirebaseDatabase.getInstance()
-    val userRef = database.getReference("users").child(userID).child("information")
+    val userRef = database.getReference("users").child(email).child("information")
 
     userRef.get().addOnCompleteListener { task ->
         if (task.isSuccessful) {
