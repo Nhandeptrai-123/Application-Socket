@@ -236,6 +236,7 @@ fun CameraScreenEditPicture(photoUri: Uri) {
 
     val coroutineScope = rememberCoroutineScope()
 
+    Log.e("CameraScreenEditPicture", photoUri.toString())
     Column(modifier = Modifier.fillMaxSize()) {
         //su dung cho toan app
         val backgroundColorLocket = Color(0xFF111111)

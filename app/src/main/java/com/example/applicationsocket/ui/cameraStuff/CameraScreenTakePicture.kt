@@ -213,55 +213,19 @@ fun HistoryPart(){
 }
 
 @Composable
-fun CameraScreenTakePicture(navController: NavController) {
+fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit) {
     val context = LocalContext.current
     val (currentCamera, setCurrentCamera) = remember { mutableStateOf(CameraSelector.DEFAULT_BACK_CAMERA) }
     val (flashEnabled, setFlashEnabled) = remember { mutableStateOf(false) }
-    val (showWhiteScreen, setShowWhiteScreen) = remember { mutableStateOf(false) }
     val imageCapture = remember {
         ImageCapture.Builder().build()
     }
 
-    val coroutineScope = rememberCoroutineScope()
+//    val coroutineScope = rememberCoroutineScope()
 
-
-    fun onPictureCaptured(photoUri: Uri) {
-        // Điều hướng sang màn hình chỉnh sửa ảnh với URI của ảnh đã chụp
-        navController.navigate("edit_picture_screen/${photoUri.toString()}")
-    }
-
+    // Hàm capturePhoto để chụp ảnh
     fun capturePhoto(onPhotoCaptured: (Uri) -> Unit) {
-        if (flashEnabled && currentCamera == CameraSelector.DEFAULT_BACK_CAMERA) {
-            imageCapture.flashMode = ImageCapture.FLASH_MODE_ON
-        } else {
-            imageCapture.flashMode = ImageCapture.FLASH_MODE_OFF
-        }
 
-        val photoFile = File(
-            context.getExternalFilesDir(null),
-            "${System.currentTimeMillis()}.jpg"
-        )
-
-        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-
-        imageCapture.takePicture(
-            outputOptions,
-            ContextCompat.getMainExecutor(context),
-            object : ImageCapture.OnImageSavedCallback {
-                override fun onError(exception: ImageCaptureException) {
-                    Log.e("CameraPreview", "Photo capture failed: ${exception.message}", exception)
-                }
-
-                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-                    val savedUri = Uri.fromFile(photoFile)
-                    Log.d("CameraPreview", "Photo capture succeeded: $savedUri")
-                    Toast.makeText(context, "Photo capture succeeded: $savedUri", Toast.LENGTH_SHORT).show()
-                    // Handle the saved image URI here
-//                    navController.navigate("edit_pỉcture_screen/$savedUri")
-                    onPhotoCaptured(savedUri)
-                }
-            }
-        )
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -301,9 +265,43 @@ fun CameraScreenTakePicture(navController: NavController) {
         ) {
             BottomBar(
                 onTakePicture = {
-                    capturePhoto { savedUri ->
-                        onPictureCaptured(savedUri)
+//                    capturePhoto { savedUri ->
+////                        onPictureCaptured(savedUri)
+//                        toGetImage(savedUri)
+//                    }
+                    if (flashEnabled && currentCamera == CameraSelector.DEFAULT_BACK_CAMERA) {
+                        imageCapture.flashMode = ImageCapture.FLASH_MODE_ON
+                    } else {
+                        imageCapture.flashMode = ImageCapture.FLASH_MODE_OFF
                     }
+
+                    val photoFile = File(
+                        context.getExternalFilesDir(null),
+                        "${System.currentTimeMillis()}.jpg"
+                    )
+
+                    val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+                    imageCapture.takePicture(
+                        outputOptions,
+                        ContextCompat.getMainExecutor(context),
+                        object : ImageCapture.OnImageSavedCallback {
+                            override fun onError(exception: ImageCaptureException) {
+                                Log.e("CameraPreview", "Photo capture failed: ${exception.message}", exception)
+                            }
+
+                            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                val savedUri = Uri.fromFile(photoFile)
+                                Log.d("CameraPreview", "Photo capture succeeded: $savedUri")
+                                Toast.makeText(context, "Photo capture succeeded: $savedUri", Toast.LENGTH_SHORT).show()
+//                                onPhotoCaptured(savedUri) // Truyền URI ảnh đã chụp về
+
+                                toGetImage(savedUri)
+
+                                Log.e("CameraScreenTakePicture", savedUri.toString())
+                            }
+                        }
+                    )
                 },
                 onSwitchCamera = {
                     setCurrentCamera(
@@ -331,6 +329,62 @@ fun CameraScreenTakePicture(navController: NavController) {
         }
     }
 }
+
+//val context = LocalContext.current
+//val (currentCamera, setCurrentCamera) = androidx.compose.runtime.remember {
+//    androidx.compose.runtime.mutableStateOf(
+//        androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
+//    )
+//}
+//val (flashEnabled, setFlashEnabled) = androidx.compose.runtime.remember {
+//    androidx.compose.runtime.mutableStateOf(
+//        false
+//    )
+//}
+//val imageCapture = remember {
+//    ImageCapture.Builder().build()
+//}
+//
+//fun onPictureCaptured(photoUri: Uri) {
+//    // Điều hướng sang màn hình chỉnh sửa ảnh với URI của ảnh đã chụp
+//    navController.navigate("edit_picture_screen/${photoUri.toString()}")
+//}
+//
+//fun capturePhoto(onPhotoCaptured: (Uri) -> Unit) {
+//
+//    if (flashEnabled && currentCamera == CameraSelector.DEFAULT_BACK_CAMERA) {
+//        imageCapture.flashMode = ImageCapture.FLASH_MODE_ON
+//    } else {
+//        imageCapture.flashMode = ImageCapture.FLASH_MODE_OFF
+//    }
+//
+//    val photoFile = File(
+//        context.getExternalFilesDir(null),
+//        "${System.currentTimeMillis()}.jpg"
+//    )
+//
+//    val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+//
+//    imageCapture.takePicture(
+//        outputOptions,
+//        ContextCompat.getMainExecutor(context),
+//        object : ImageCapture.OnImageSavedCallback {
+//            override fun onError(exception: ImageCaptureException) {
+//                Log.e("CameraPreview", "Photo capture failed: ${exception.message}", exception)
+//            }
+//
+//            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+//                val savedUri = Uri.fromFile(photoFile)
+//                Log.d("CameraPreview", "Photo capture succeeded: $savedUri")
+//                Toast.makeText(context, "Photo capture succeeded: $savedUri", Toast.LENGTH_SHORT).show()
+//                // Handle the saved image URI here
+////                    navController.navigate("edit_pỉcture_screen/$savedUri")
+////                    onPhotoCaptured(savedUri)
+//
+//            }
+//        }
+//    )
+//}
 
 //@Composable
 //fun testmain1(){

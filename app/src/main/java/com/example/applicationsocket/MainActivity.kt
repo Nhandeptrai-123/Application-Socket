@@ -79,15 +79,22 @@ fun MainScreen() {
         composable("take_picture_screen") {
             CameraScreenTakePicture(
 //                onTakePicture = {},
-                navController
+//                navController.navigate("edit_picture_screen")
+                toGetImage = { photoUri ->
+                    val testPicture : String = photoUri.toString()
+                    navController.navigate("edit_picture_screen/${testPicture}")
+                }
+
             )
         }
         composable(
-            "edit_picture_screen/{photoUri}",
-            arguments = listOf(navArgument("photoUri") { type = NavType.StringType })
+            "edit_picture_screen/{testPicture}",
+            arguments = listOf(navArgument("testPicture") { type = NavType.StringType })
         ) { backStackEntry ->
-            val photoUri = Uri.parse(backStackEntry.arguments?.getString("photoUri"))
-            CameraScreenEditPicture(photoUri)
+            val testPicture = Uri.parse(backStackEntry.arguments?.getString("testPicture"))
+            requireNotNull(testPicture)
+//            val photoUri = Uri.parse(backStackEntry.arguments?.getString("photoUri"))
+            CameraScreenEditPicture(testPicture)
         }
     }
 }
