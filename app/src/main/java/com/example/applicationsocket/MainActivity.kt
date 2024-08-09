@@ -4,6 +4,7 @@ import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
 import android.Manifest
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
@@ -78,25 +79,46 @@ fun MainScreen() {
     NavHost(navController, startDestination = "take_picture_screen") {
         composable("take_picture_screen") {
             CameraScreenTakePicture(
-//                onTakePicture = {},
-//                navController.navigate("edit_picture_screen")
                 toGetImage = { photoUri ->
-                    val testPicture : String = photoUri.toString()
-                    navController.navigate("edit_picture_screen/${testPicture}")
+                    val testPicture: String = Uri.encode(photoUri.toString())
+                    navController.navigate("edit_picture_screen/$testPicture")
+                    Log.d("Navigation", "Navigating to edit_picture_screen with URI: $testPicture")
                 }
-
             )
         }
         composable(
             "edit_picture_screen/{testPicture}",
             arguments = listOf(navArgument("testPicture") { type = NavType.StringType })
         ) { backStackEntry ->
-            val testPicture = Uri.parse(backStackEntry.arguments?.getString("testPicture"))
-            requireNotNull(testPicture)
-//            val photoUri = Uri.parse(backStackEntry.arguments?.getString("photoUri"))
+            val testPictureUri = backStackEntry.arguments?.getString("testPicture")
+            requireNotNull(testPictureUri) { "Test picture URI is null" }
+            val testPicture = Uri.parse(Uri.decode(testPictureUri))
             CameraScreenEditPicture(testPicture)
         }
     }
+
+//    NavHost(navController, startDestination = "take_picture_screen") {
+//        composable("take_picture_screen") {
+//            CameraScreenTakePicture(
+////                onTakePicture = {},
+////                navController.navigate("edit_picture_screen")
+//                toGetImage = { photoUri ->
+//                    val testPicture : String = photoUri.toString()
+//                    navController.navigate("edit_picture_screen/${testPicture}")
+//                }
+//
+//            )
+//        }
+//        composable(
+//            "edit_picture_screen/{testPicture}",
+//            arguments = listOf(navArgument("testPicture") { type = NavType.StringType })
+//        ) { backStackEntry ->
+//            val testPicture = Uri.parse(backStackEntry.arguments?.getString("testPicture"))
+//            requireNotNull(testPicture)
+////            val photoUri = Uri.parse(backStackEntry.arguments?.getString("photoUri"))
+//            CameraScreenEditPicture(testPicture)
+//        }
+//    }
 }
 
 @Preview(showBackground = true)
