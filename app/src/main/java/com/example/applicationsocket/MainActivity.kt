@@ -1,5 +1,6 @@
 package com.example.applicationsocket
 
+
 import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
@@ -40,8 +41,18 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.database.FirebaseDatabase
+import com.example.applicationsocket.ui.cameraStuff.CameraScreenTakePicture
+import com.example.applicationsocket.ui.cameraStuff.CameraScreenEditPicture
+import java.io.File
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
+    private lateinit var outputDirectory: File
+    private lateinit var cameraExecutor: ExecutorService
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this) // Khởi tạo Firebase
@@ -50,6 +61,37 @@ class MainActivity : ComponentActivity() {
                 MainNaviga()
             }
         }
+        requestPermissions()
+
+        outputDirectory = getOutputDirectory()
+        cameraExecutor = Executors.newSingleThreadExecutor()
+        return if (mediaDir != null && mediaDir.exists())
+            mediaDir else filesDir
+    }
+ override fun onDestroy() {
+        super.onDestroy()
+        cameraExecutor.shutdown()
+    }
+
+    private fun requestPermissions() {
+        val requiredPermissions = arrayOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE
+        )
+
+        ActivityCompat.requestPermissions(
+            this,
+            requiredPermissions,
+            REQUEST_CODE_PERMISSIONS
+        )
+    }
+
+    private fun getOutputDirectory(): File {
+        val mediaDir = externalMediaDirs.firstOrNull()?.let {
+            File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
+    companion object {
+        private const val REQUEST_CODE_PERMISSIONS = 10
     }
 }
 
@@ -203,6 +245,25 @@ fun MainNaviga(){
                     }
                 )
             }
+            composable("take_picture_screen") {
+            CameraScreenTakePicture(
+                toGetImage = { photoUri ->
+                    val testPicture: String = Uri.encode(photoUri.toString())
+                    navController.navigate("edit_picture_screen/$testPicture")
+                    Log.d("Navigation", "Navigating to edit_picture_screen with URI: $testPicture")
+                }
+            )
+        }
+        composable(
+            "edit_picture_screen/{testPicture}",
+            arguments = listOf(navArgument("testPicture") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val testPictureUri = backStackEntry.arguments?.getString("testPicture")
+            requireNotNull(testPictureUri) { "Test picture URI is null" }
+            val testPicture = Uri.parse(Uri.decode(testPictureUri))
+            CameraScreenEditPicture(testPicture)
+        }
+    }
 
             composable("profile/{email}",
                 arguments = listOf(navArgument("email") { type = NavType.StringType })
