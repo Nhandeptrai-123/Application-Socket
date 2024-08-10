@@ -2,12 +2,17 @@ package com.example.applicationsocket
 
 
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import android.Manifest
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -48,48 +53,59 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
+
     private lateinit var outputDirectory: File
     private lateinit var cameraExecutor: ExecutorService
-
-
+    private lateinit var requestPermissionsLauncher: ActivityResultLauncher<Array<String>>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this) // Khởi tạo Firebase
+
         setContent {
             ApplicationSocketTheme {
                 MainNaviga()
             }
         }
+
+        // Request permissions
         requestPermissions()
 
         outputDirectory = getOutputDirectory()
         cameraExecutor = Executors.newSingleThreadExecutor()
-        return if (mediaDir != null && mediaDir.exists())
-            mediaDir else filesDir
     }
- override fun onDestroy() {
+
+    override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
     }
 
     private fun requestPermissions() {
-        val requiredPermissions = arrayOf(
-            Manifest.permission.CAMERA,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        )
+        requestPermissionsLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+            // Handle permissions result
+            val allPermissionsGranted = permissions.values.all { it }
+            if (!allPermissionsGranted) {
+                // Handle case where not all permissions are granted
+                // For example, show a message to the user
+            }
+        }
 
-        ActivityCompat.requestPermissions(
-            this,
-            requiredPermissions,
-            REQUEST_CODE_PERMISSIONS
+        requestPermissionsLauncher.launch(
+            arrayOf(
+                Manifest.permission.CAMERA,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            )
         )
     }
 
     private fun getOutputDirectory(): File {
         val mediaDir = externalMediaDirs.firstOrNull()?.let {
             File(it, resources.getString(R.string.app_name)).apply { mkdirs() }
+        }
+        return if (mediaDir != null && mediaDir.exists()) mediaDir else filesDir
+    }
+
     companion object {
         private const val REQUEST_CODE_PERMISSIONS = 10
     }
@@ -228,30 +244,41 @@ fun MainNaviga(){
                     },
                 )
             }
-            composable(
-                "Home/{email}",
+//            composable(
+//                "Home/{email}",
+//                arguments = listOf(navArgument("email") { type = NavType.StringType })
+//            ) { backStackEntry ->
+//                val email = backStackEntry.arguments?.getString("email")
+//                requireNotNull(email) // Ensure userId is not null
+//                Home(userID = email,
+//                    userViewModel = userViewModel,
+//                    idmodelUser = userIDModel,
+//                    toProfile = {
+//                        navController.navigate("profile/$email")
+//                    },
+//                    toFriendList = {
+//                        navController.navigate("friendList/$email")
+//                    }
+//                )
+//            }
+            composable("Home/{email}",
                 arguments = listOf(navArgument("email") { type = NavType.StringType })
-            ) { backStackEntry ->
+            ) {backStackEntry ->
                 val email = backStackEntry.arguments?.getString("email")
-                requireNotNull(email) // Ensure userId is not null
-                Home(userID = email,
-                    userViewModel = userViewModel,
-                    idmodelUser = userIDModel,
-                    toProfile = {
-                        navController.navigate("profile/$email")
-                    },
-                    toFriendList = {
-                        navController.navigate("friendList/$email")
-                    }
-                )
-            }
-            composable("take_picture_screen") {
+                requireNotNull(email)
             CameraScreenTakePicture(
                 toGetImage = { photoUri ->
                     val testPicture: String = Uri.encode(photoUri.toString())
                     navController.navigate("edit_picture_screen/$testPicture")
                     Log.d("Navigation", "Navigating to edit_picture_screen with URI: $testPicture")
-                }
+                },
+                toProfile = {
+                    navController.navigate("profile/$email")
+                },
+                toFriend = {
+                    navController.navigate("friendList/$email")
+                },
+                userIDModel = userIDModel,
             )
         }
         composable(
@@ -263,7 +290,7 @@ fun MainNaviga(){
             val testPicture = Uri.parse(Uri.decode(testPictureUri))
             CameraScreenEditPicture(testPicture)
         }
-    }
+
 
             composable("profile/{email}",
                 arguments = listOf(navArgument("email") { type = NavType.StringType })

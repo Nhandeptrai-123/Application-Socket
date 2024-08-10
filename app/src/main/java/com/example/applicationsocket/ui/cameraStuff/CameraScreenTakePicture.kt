@@ -26,6 +26,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -43,11 +44,13 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.example.applicationsocket.CameraPreview
 import com.example.applicationsocket.R
+import com.example.applicationsocket.data.UserIDModel
 import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
 import java.io.File
 
 @Composable
-fun TopBar(modifier: Modifier = Modifier){
+fun TopBar(toProfile: () -> Unit, toFriend: () -> Unit, userIDModel: UserIDModel){
+    val userInformation = userIDModel.userID.observeAsState().value
     Row(
         modifier = Modifier
             .fillMaxSize(),
@@ -55,7 +58,9 @@ fun TopBar(modifier: Modifier = Modifier){
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         FloatingActionButton(
-            onClick = { /*TODO*/ },
+            onClick = {
+                toProfile()
+            },
             shape = CircleShape,
             modifier = Modifier
                 .size(45.dp),
@@ -72,7 +77,9 @@ fun TopBar(modifier: Modifier = Modifier){
         }
 
         Button(
-            onClick = { /*TODO*/ },
+            onClick = {
+                toFriend()
+            },
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.DarkGray,
                 contentColor = Color.White
@@ -88,7 +95,7 @@ fun TopBar(modifier: Modifier = Modifier){
             )
                 Spacer(modifier = Modifier.width(8.dp)) // Thêm khoảng cách giữa hình ảnh và văn bản
             Text(
-                text = "1 Bạn bè",
+                text = "Chào ${userInformation?.email}",
                 fontWeight = FontWeight.Bold
             )
         }
@@ -213,7 +220,7 @@ fun HistoryPart(){
 }
 
 @Composable
-fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit) {
+fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit, toProfile: () -> Unit, toFriend: () -> Unit, userIDModel: UserIDModel){
     val context = LocalContext.current
     val (currentCamera, setCurrentCamera) = remember { mutableStateOf(CameraSelector.DEFAULT_BACK_CAMERA) }
     val (flashEnabled, setFlashEnabled) = remember { mutableStateOf(false) }
@@ -221,12 +228,6 @@ fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit) {
         ImageCapture.Builder().build()
     }
 
-//    val coroutineScope = rememberCoroutineScope()
-
-    // Hàm capturePhoto để chụp ảnh
-    fun capturePhoto(onPhotoCaptured: (Uri) -> Unit) {
-
-    }
 
     Column(modifier = Modifier.fillMaxSize()) {
         //su dung cho toan app
@@ -239,7 +240,7 @@ fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit) {
                 .background(backgroundColorLocket),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TopBar()
+            TopBar(toProfile, toFriend,userIDModel)
         }
 
         // Phần giữa của màn hình
@@ -330,243 +331,12 @@ fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit) {
     }
 }
 
-//val context = LocalContext.current
-//val (currentCamera, setCurrentCamera) = androidx.compose.runtime.remember {
-//    androidx.compose.runtime.mutableStateOf(
-//        androidx.camera.core.CameraSelector.DEFAULT_BACK_CAMERA
-//    )
-//}
-//val (flashEnabled, setFlashEnabled) = androidx.compose.runtime.remember {
-//    androidx.compose.runtime.mutableStateOf(
-//        false
-//    )
-//}
-//val imageCapture = remember {
-//    ImageCapture.Builder().build()
-//}
-//
-//fun onPictureCaptured(photoUri: Uri) {
-//    // Điều hướng sang màn hình chỉnh sửa ảnh với URI của ảnh đã chụp
-//    navController.navigate("edit_picture_screen/${photoUri.toString()}")
-//}
-//
-//fun capturePhoto(onPhotoCaptured: (Uri) -> Unit) {
-//
-//    if (flashEnabled && currentCamera == CameraSelector.DEFAULT_BACK_CAMERA) {
-//        imageCapture.flashMode = ImageCapture.FLASH_MODE_ON
-//    } else {
-//        imageCapture.flashMode = ImageCapture.FLASH_MODE_OFF
-//    }
-//
-//    val photoFile = File(
-//        context.getExternalFilesDir(null),
-//        "${System.currentTimeMillis()}.jpg"
-//    )
-//
-//    val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-//
-//    imageCapture.takePicture(
-//        outputOptions,
-//        ContextCompat.getMainExecutor(context),
-//        object : ImageCapture.OnImageSavedCallback {
-//            override fun onError(exception: ImageCaptureException) {
-//                Log.e("CameraPreview", "Photo capture failed: ${exception.message}", exception)
-//            }
-//
-//            override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-//                val savedUri = Uri.fromFile(photoFile)
-//                Log.d("CameraPreview", "Photo capture succeeded: $savedUri")
-//                Toast.makeText(context, "Photo capture succeeded: $savedUri", Toast.LENGTH_SHORT).show()
-//                // Handle the saved image URI here
-////                    navController.navigate("edit_pỉcture_screen/$savedUri")
-////                    onPhotoCaptured(savedUri)
-//
-//            }
-//        }
-//    )
-//}
 
+
+//@Preview(showBackground = true, showSystemUi = true)
 //@Composable
-//fun testmain1(){
-//    val context = LocalContext.current
-//    val (currentCamera, setCurrentCamera) = remember { mutableStateOf(CameraSelector.DEFAULT_BACK_CAMERA) }
-//    val (flashEnabled, setFlashEnabled) = remember { mutableStateOf(false) }
-//    val (showWhiteScreen, setShowWhiteScreen) = remember { mutableStateOf(false) }
-//    val imageCapture = remember {
-//        ImageCapture.Builder().build()
-//    }
-//
-//    val coroutineScope = rememberCoroutineScope()
-//
-//    fun capturePhoto() {
-//
-//        if (flashEnabled && currentCamera == CameraSelector.DEFAULT_BACK_CAMERA) {
-//            imageCapture.flashMode = ImageCapture.FLASH_MODE_ON
-//        } else {
-//            imageCapture.flashMode = ImageCapture.FLASH_MODE_OFF
-//        }
-//
-//        // Tạo một tệp tin để lưu trữ ảnh
-//        val photoFile = File(
-//            context.getExternalFilesDir(null),
-//            "${System.currentTimeMillis()}.jpg"
-//        )
-//
-//        // Thiết lập các tùy chọn đầu ra cho ImageCapture
-//        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
-//
-//        // Chụp ảnh và lưu trữ nó vào tệp tin đã tạo
-//        imageCapture.takePicture(
-//            outputOptions,
-//            ContextCompat.getMainExecutor(context),
-//            object : ImageCapture.OnImageSavedCallback {
-//                // Xử lý khi chụp ảnh thất bại
-//                override fun onError(exception: ImageCaptureException) {
-//                    Log.e("CameraPreview", "Photo capture failed: ${exception.message}", exception)
-//                }
-//
-//                override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
-//                    // Lấy URI của ảnh đã lưu
-//                    val savedUri = Uri.fromFile(photoFile)
-//                    Log.d("CameraPreview", "Photo capture succeeded: $savedUri")
-//                    // Handle the saved image URI here
-//                    // Xử lý URI của ảnh đã lưu ở đây
-//                    Toast.makeText(context, "Photo capture succeeded: $savedUri", Toast.LENGTH_SHORT).show()
-//                }
-//            }
-//        )
-//    }
-//
-//    fun takePicture() {
-//        if (flashEnabled && currentCamera == CameraSelector.DEFAULT_FRONT_CAMERA) {
-//            setShowWhiteScreen(true)
-//            coroutineScope.launch {
-//                delay(1000)
-//                capturePhoto()
-//                setShowWhiteScreen(false)
-//            }
-//        } else {
-//            capturePhoto()
-//        }
-//    }
-//
-//    Column(modifier = Modifier.fillMaxSize()) {
-//        // Phần trên cùng của màn hình
-//        Row(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .weight(0.15625f)
-//                .background(Color.Red),
-////            contentAlignment = Alignment.Center
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            if (showWhiteScreen) {
-//                Box(modifier = Modifier
-//                    .fillMaxSize()
-//                    .background(Color.White))
-//            } else {
-//                TopBar()
-//            }
-//        }
-//
-//        // Phần giữa của màn hình
-//        Row(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .weight(0.4375f)
-//                .background(Color.Green)
-//                .clip(RoundedCornerShape(55.dp)),
-////            contentAlignment = Alignment.Center
-//        ) {
-//            CameraPreview(
-//                currentCamera,
-//                onImageCaptured = { uri ->
-//                // Handle captured image URI here
-//                },
-//                imageCapture,
-//                modifier = Modifier
-////                        .align(Alignment.Center)
-//            )
-//        }
-//
-//        // Phần dưới cùng của màn hình
-//        Row(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .weight(0.375f)
-//                .background(Color.Blue),
-//            verticalAlignment = Alignment.CenterVertically
-//        ) {
-//            if (showWhiteScreen) {
-//                Box(modifier = Modifier
-//                    .fillMaxSize()
-//                    .background(Color.White))
-//            } else {
-//                BottomBar(
-//                    onTakePicture = { takePicture() },
-//                    onSwitchCamera = {
-//                        setCurrentCamera(
-//                            if (currentCamera == CameraSelector.DEFAULT_BACK_CAMERA)
-//                                CameraSelector.DEFAULT_FRONT_CAMERA
-//                            else
-//                                CameraSelector.DEFAULT_BACK_CAMERA
-//                        )
-//                    },
-//                    flashEnabled = flashEnabled,
-//                    onFlashToggle = { setFlashEnabled(!flashEnabled) }
-//                )
-//            }
-//        }
+//fun TopBarPreview() {
+//    ApplicationSocketTheme {
+//        TopBar({}, {})
 //    }
 //}
-
-//@Composable
-//fun testmain(){
-//    Column(modifier = Modifier.fillMaxSize()) {
-//        // Phần trên cùng của màn hình
-//        Box(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .weight(2f)
-//                .background(Color.Red),
-//            contentAlignment = Alignment.Center
-//        ) {
-//            TopBar()
-//        }
-//
-//        // Phần giữa của màn hình
-//        Box(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .weight(4f)
-//                .background(Color.Green),
-//            contentAlignment = Alignment.Center
-//        ) {
-//            // có chỉnh sửa lại phần CameraPreview
-//            CameraPreview()
-//        }
-//
-//        // Phần dưới cùng của màn hình
-//        Box(
-//            modifier = Modifier
-//                .fillMaxWidth()
-//                .weight(3.25f)
-//                .background(Color.Blue),
-//            contentAlignment = Alignment.Center
-//        ) {
-//            BottomBar()
-//        }
-//    }
-//}
-
-
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun TopBarPreview() {
-    ApplicationSocketTheme {
-//        HistoryPart()
-
-        TopBar()
-    }
-}
