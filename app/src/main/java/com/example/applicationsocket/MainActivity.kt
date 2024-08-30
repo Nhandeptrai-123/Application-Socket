@@ -48,6 +48,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.database.FirebaseDatabase
 import com.example.applicationsocket.ui.cameraStuff.CameraScreenTakePicture
 import com.example.applicationsocket.ui.cameraStuff.CameraScreenEditPicture
+import com.example.applicationsocket.ui.cameraStuff.ListImage
 import java.io.File
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -278,9 +279,20 @@ fun MainNaviga(){
                 toFriend = {
                     navController.navigate("friendList/$email")
                 },
-                userIDModel = userIDModel,
+                toListImage = {
+                    navController.navigate("listImage/$email")
+                },
+                userModel = userViewModel,
             )
         }
+            composable("listImage/{email}",
+                arguments = listOf(navArgument("email") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val email = backStackEntry.arguments?.getString("email")
+                requireNotNull(email) { "Email is null" }
+                ListImage(email, userViewModel)
+
+            }
         composable(
             "edit_picture_screen/{testPicture}",
             arguments = listOf(navArgument("testPicture") { type = NavType.StringType })

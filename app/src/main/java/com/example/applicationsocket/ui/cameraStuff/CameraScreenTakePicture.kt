@@ -10,15 +10,20 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -26,10 +31,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,16 +52,18 @@ import androidx.navigation.NavController
 import com.example.applicationsocket.CameraPreview
 import com.example.applicationsocket.R
 import com.example.applicationsocket.data.UserIDModel
+import com.example.applicationsocket.data.UserSessionViewModel
 import com.example.applicationsocket.ui.theme.ApplicationSocketTheme
+import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
-fun TopBar(toProfile: () -> Unit, toFriend: () -> Unit, userIDModel: UserIDModel){
-    val userInformation = userIDModel.userID.observeAsState().value
+fun TopBar(toProfile: () -> Unit, toFriend: () -> Unit, userIDModel: UserSessionViewModel){
+    val userInformation = userIDModel.userInformation.observeAsState().value
     Row(
         modifier = Modifier
-            .fillMaxSize(),
-//            .padding(16.dp),
+            .fillMaxSize()
+            .padding(16.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         FloatingActionButton(
@@ -95,7 +104,7 @@ fun TopBar(toProfile: () -> Unit, toFriend: () -> Unit, userIDModel: UserIDModel
             )
                 Spacer(modifier = Modifier.width(8.dp)) // Thêm khoảng cách giữa hình ảnh và văn bản
             Text(
-                text = "Chào ${userInformation?.email}",
+                text = "Chào ${userInformation?.firstName} ${userInformation?.lastName}",
                 fontWeight = FontWeight.Bold
             )
         }
@@ -193,14 +202,16 @@ fun BottomBar(
 
 
 @Composable
-fun HistoryPart(){
+fun HistoryPart(toListImage: () -> Unit){
     //su dung cho toan app
     val backgroundColorLocket = Color(0xFF111111)
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .clickable { }
+            .clickable {
+                toListImage()
+            }
             .background(backgroundColorLocket)
 //            .fillMaxWidth()
     ) {
@@ -220,7 +231,7 @@ fun HistoryPart(){
 }
 
 @Composable
-fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit, toProfile: () -> Unit, toFriend: () -> Unit, userIDModel: UserIDModel){
+fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit, toProfile: () -> Unit, toFriend: () -> Unit,toListImage: () -> Unit, userModel: UserSessionViewModel){
     val context = LocalContext.current
     val (currentCamera, setCurrentCamera) = remember { mutableStateOf(CameraSelector.DEFAULT_BACK_CAMERA) }
     val (flashEnabled, setFlashEnabled) = remember { mutableStateOf(false) }
@@ -240,7 +251,7 @@ fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit, toProfile: () -> Unit, to
                 .background(backgroundColorLocket),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TopBar(toProfile, toFriend,userIDModel)
+            TopBar(toProfile, toFriend,userModel)
         }
 
         // Phần giữa của màn hình
@@ -326,17 +337,23 @@ fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit, toProfile: () -> Unit, to
                 .weight(0.1875f)
 
         ){
-            HistoryPart()
+            HistoryPart( toListImage = toListImage)
         }
     }
 }
 
+@Composable
+fun toGetImage(savedUri: Uri) {
+    CameraScreenEditPicture(savedUri)
+}
 
 
-//@Preview(showBackground = true, showSystemUi = true)
-//@Composable
-//fun TopBarPreview() {
-//    ApplicationSocketTheme {
-//        TopBar({}, {})
-//    }
-//}
+
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun TopBarPreview() {
+    ApplicationSocketTheme {
+        CameraPreview(currentCamera = CameraSelector.DEFAULT_BACK_CAMERA, onImageCaptured = {}, ImageCapture.Builder().build())
+    }
+}
