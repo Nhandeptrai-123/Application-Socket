@@ -19,6 +19,7 @@ firebaseAuth = "23.0.0"
 runtimeLivedata = "1.6.8"
 firebaseStorageKtx = "21.0.0"
 roomKtx = "2.6.1"
+identityJvm = "202408.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -45,6 +46,7 @@ androidx-runtime-livedata = { group = "androidx.compose.runtime", name = "runtim
 firebase-storage-ktx = { group = "com.google.firebase", name = "firebase-storage-ktx", version.ref = "firebaseStorageKtx" }
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "roomKtx" }
 androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "cameraView" }
+identity-jvm = { group = "com.android.identity", name = "identity-jvm", version.ref = "identityJvm" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

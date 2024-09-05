@@ -17,7 +17,6 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
@@ -51,10 +50,11 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
             excludes += "/META-INF/NOTICE.md"
             excludes += "/META-INF/LICENSE.md"
-
+            excludes += "/META-INF/versions/9/OSGI-INF/MANIFEST.MF"  // Loại bỏ các file trùng lặp
         }
     }
 }
+
 
 dependencies {
 
@@ -74,6 +74,7 @@ dependencies {
     implementation(libs.androidx.runtime.livedata)
     implementation(libs.firebase.storage.ktx)
     implementation(libs.androidx.room.ktx)
+    implementation(libs.identity.jvm)
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

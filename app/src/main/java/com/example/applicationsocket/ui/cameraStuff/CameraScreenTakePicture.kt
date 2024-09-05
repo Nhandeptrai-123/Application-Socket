@@ -36,6 +36,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -231,18 +232,22 @@ fun HistoryPart(toListImage: () -> Unit){
 }
 
 @Composable
-fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit, toProfile: () -> Unit, toFriend: () -> Unit,toListImage: () -> Unit, userModel: UserSessionViewModel){
+fun CameraScreenTakePicture(
+    toGetImage: (Uri) -> Unit,
+    toProfile: () -> Unit,
+    toFriend: () -> Unit,
+    toListImage: () -> Unit,
+    userModel: UserSessionViewModel,
+    idModel: UserIDModel
+) {
     val context = LocalContext.current
     val (currentCamera, setCurrentCamera) = remember { mutableStateOf(CameraSelector.DEFAULT_BACK_CAMERA) }
     val (flashEnabled, setFlashEnabled) = remember { mutableStateOf(false) }
-    val imageCapture = remember {
-        ImageCapture.Builder().build()
-    }
-
-
+    val imageCapture = remember { ImageCapture.Builder().build() }
+    val userid = idModel.userID.observeAsState().value
     Column(modifier = Modifier.fillMaxSize()) {
-        //su dung cho toan app
         val backgroundColorLocket = Color(0xFF111111)
+
         // Phần trên cùng của màn hình
         Row(
             modifier = Modifier
@@ -251,7 +256,7 @@ fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit, toProfile: () -> Unit, to
                 .background(backgroundColorLocket),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TopBar(toProfile, toFriend,userModel)
+            TopBar(toProfile, toFriend, userModel)
         }
 
         // Phần giữa của màn hình
@@ -266,6 +271,7 @@ fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit, toProfile: () -> Unit, to
                 // Handle captured image URI here
             }, imageCapture)
         }
+
         // Phần dưới cùng của màn hình
         Row(
             modifier = Modifier
@@ -273,14 +279,9 @@ fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit, toProfile: () -> Unit, to
                 .weight(0.21875f)
                 .background(backgroundColorLocket)
                 .padding(top = 20.dp),
-//            verticalAlignment = Alignment.CenterVertically
         ) {
             BottomBar(
                 onTakePicture = {
-//                    capturePhoto { savedUri ->
-////                        onPictureCaptured(savedUri)
-//                        toGetImage(savedUri)
-//                    }
                     if (flashEnabled && currentCamera == CameraSelector.DEFAULT_BACK_CAMERA) {
                         imageCapture.flashMode = ImageCapture.FLASH_MODE_ON
                     } else {
@@ -304,13 +305,15 @@ fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit, toProfile: () -> Unit, to
 
                             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                                 val savedUri = Uri.fromFile(photoFile)
+//                                val photoData = PhotoData(savedUri, userid?.email.toString())
                                 Log.d("CameraPreview", "Photo capture succeeded: $savedUri")
-                                Toast.makeText(context, "Photo capture succeeded: $savedUri", Toast.LENGTH_SHORT).show()
-//                                onPhotoCaptured(savedUri) // Truyền URI ảnh đã chụp về
-
+                                Toast.makeText(
+                                    context,
+                                    "Photo capture succeeded: $savedUri",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+//                                toGetImage(savedUri, userid?.email.toString())
                                 toGetImage(savedUri)
-
-                                Log.e("CameraScreenTakePicture", savedUri.toString())
                             }
                         }
                     )
@@ -335,21 +338,11 @@ fun CameraScreenTakePicture(toGetImage: (Uri) -> Unit, toProfile: () -> Unit, to
                 .fillMaxWidth()
                 .background(backgroundColorLocket)
                 .weight(0.1875f)
-
-        ){
-            HistoryPart( toListImage = toListImage)
+        ) {
+            HistoryPart(toListImage = toListImage)
         }
     }
 }
-
-@Composable
-fun toGetImage(savedUri: Uri) {
-    CameraScreenEditPicture(savedUri)
-}
-
-
-
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun TopBarPreview() {

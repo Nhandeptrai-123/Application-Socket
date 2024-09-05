@@ -270,8 +270,10 @@ fun MainNaviga(){
             CameraScreenTakePicture(
                 toGetImage = { photoUri ->
                     val testPicture: String = Uri.encode(photoUri.toString())
-                    navController.navigate("edit_picture_screen/$testPicture")
-                    Log.d("Navigation", "Navigating to edit_picture_screen with URI: $testPicture")
+//                    val Email = idModel.userID.value ?: ""
+//                    val encodedEmail: String = Uri.encode(Email.toString())
+                    navController.navigate("edit_picture_screen/$testPicture/$email")
+                    Log.d("Navigation", "Navigating to edit_picture_screen with URI: $testPicture and Email: $email")
                 },
                 toProfile = {
                     navController.navigate("profile/$email")
@@ -283,6 +285,7 @@ fun MainNaviga(){
                     navController.navigate("listImage/$email")
                 },
                 userModel = userViewModel,
+                idModel = userIDModel
             )
         }
             composable("listImage/{email}",
@@ -293,15 +296,32 @@ fun MainNaviga(){
                 ListImage(email, userViewModel)
 
             }
-        composable(
-            "edit_picture_screen/{testPicture}",
-            arguments = listOf(navArgument("testPicture") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val testPictureUri = backStackEntry.arguments?.getString("testPicture")
-            requireNotNull(testPictureUri) { "Test picture URI is null" }
-            val testPicture = Uri.parse(Uri.decode(testPictureUri))
-            CameraScreenEditPicture(testPicture)
-        }
+            composable(
+                "edit_picture_screen/{testPicture}/{email}",
+                arguments = listOf(
+                    navArgument("testPicture") { type = NavType.StringType },
+                    navArgument("email") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                val testPictureUriString = backStackEntry.arguments?.getString("testPicture")
+                val emailEncoded = backStackEntry.arguments?.getString("email")
+
+                Log.d("Navigation", "Received testPictureUriString: $testPictureUriString and emailEncoded: $emailEncoded")
+
+                requireNotNull(testPictureUriString) { "Test picture URI is null" }
+                requireNotNull(emailEncoded) { "Email is null" }
+
+                val testPictureUri = Uri.parse(Uri.decode(testPictureUriString))
+//                val email = Uri.decode(emailEncoded)
+
+                Log.d("Navigation", "Decoded testPictureUri: $testPictureUri and email: $emailEncoded")
+
+                CameraScreenEditPicture(testPictureUri, emailEncoded, userIDModel, comback = {
+                    navController.navigate("Home/$emailEncoded")
+                })
+            }
+
+
 
 
             composable("profile/{email}",
